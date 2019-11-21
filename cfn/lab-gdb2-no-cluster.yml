@@ -1,0 +1,693 @@
+---
+## Amazon Aurora Labs for MySQL - Global Database
+## Infrastructure template with an Aurora cluster for lab exercises
+##
+## Changelog:
+## 2019-05-13 - Initial release
+## 2019-05-29 - Changed how AZ selection works
+## 2019-06-12 - Changed template to use Secrets MAnager for DB credentials
+## 2019-06-13 - Preconfigured aws cli
+## 2019-06-14 - Preconfigured DB credentials as ENV variables
+## 2019-06-14 - Fixed issue with Scalable Target and uppercase cluster identifiers
+## 2019-09-18 - Updated AMIs, Remove SSH access, bootstrap script changes for SSM
+## 2019-09-19 - Fixed resource names to enable EE
+## 2019-09-23 - Removed custom Lambda resource, using native role assignment
+## 2019-09-23 - Removed !Sub references on static names to pass linter
+## 2019-10-01 - edchan@ Forked for Global Database Infrastructure
+## 2019-10-18 - Updates to Allowed Regions (Global database Availability)
+## 2019-11-10 - Added Apache Superset EC2 launch
+##
+## Dependencies:
+## none
+##
+## License:
+## This sample code is made available under the MIT-0 license. See the LICENSE file.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Amazon Aurora Labs for MySQL - Global Database Fork (Region2)
+
+## Parameters
+Parameters:
+  vpcAZs:
+    Type: "List<AWS::EC2::AvailabilityZone::Name>"
+    Description: List of Availability Zones to use for the subnets in the VPC. Must pick 3 AZs in regions with 3 or more AZs.
+  LatestAmiId:
+    # Use public Systems Manager Parameter to retrieve latest Amazon Linux 2 AMI IDs
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+
+## Conditions
+Conditions:
+  cond3AZs: !Equals [ !FindInMap [ RegionalSettings, !Ref "AWS::Region", azs ], "3" ]
+
+## Mappings
+Mappings:
+  RegionalSettings:
+    us-east-1:
+      bastionAmi: ami-024582e76075564db
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Ohio
+      azs: "3"
+    us-east-2:
+      bastionAmi: ami-090a9429be63ca087
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: N. Virginia
+      azs: "3"
+    us-west-1:
+      bastionAmi: ami-0c6eca62e6c7dacff
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: N. California
+      azs: "2"
+    us-west-2:
+      bastionAmi: ami-09c08e9cd8d9c1b93
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Oregon
+      azs: "3"
+    eu-central-1:
+      bastionAmi: ami-0fd6d676e2e90dc7b
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Frankfurt
+      azs: "3"
+    eu-west-1:
+      bastionAmi: ami-08f053fa3d25478f4
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Ireland
+      azs: "3"
+    eu-west-2:
+      bastionAmi: ami-012d95ddd53c98e0e
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: London
+      azs: "3"
+    eu-west-3:
+      bastionAmi: ami-0001c7938b8e89312
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Paris
+      azs: "3"
+    ap-southeast-1:
+      bastionAmi: ami-0f8c65cdcc35d0a72
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Singapore
+      azs: "3"
+    ap-southeast-2:
+      bastionAmi: ami-056280928f86f80a8
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Sydney
+      azs: "3"
+    ap-south-1:
+      bastionAmi: ami-03d48fdf7c142da15
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Mumbai
+      azs: "3"
+    ap-northeast-1:
+      bastionAmi: ami-0193f3ddafc2d8921
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Tokyo
+      azs: "3"
+    ap-northeast-2:
+      bastionAmi: ami-0b0d9551c4775f4e4
+      bastionType: m5.large
+      nodeType: db.r5.large
+      name: Seoul
+      azs: "3"
+  NetworkSettings:
+    global:
+      # Region 2 CIDR on 172.32.0.0/16 in the event peering is required
+      vpcCidr: 172.32.0.0/16
+      subPub1Cidr: 172.32.0.0/24
+      subPub2Cidr: 172.32.1.0/24
+      subPub3Cidr: 172.32.2.0/24
+      subPrv1Cidr: 172.32.10.0/24
+      subPrv2Cidr: 172.32.11.0/24
+      subPrv3Cidr: 172.32.12.0/24
+      sshSourceCidr: 0.0.0.0/0
+  ClusterSettings:
+    global:
+      dbSchema: mylab
+      dbDriver: mysql
+    scaling:
+      maxCapacity: 2
+      minCapacity: 1
+      cpuLoadTarget: 20
+    sysbench:
+      dbSchema: sbtpcc
+      runTime: '300'
+      numThreads: '4'
+      numTables: '8'
+      numWarehouses: '2'
+
+
+## Resources
+Resources:
+
+## The VPC
+  vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      CidrBlock: !FindInMap [ NetworkSettings, global, vpcCidr ]
+      Tags:
+        - Key: Name
+          Value: labstack-vpc
+
+## Create an IGW & attach it to the VPC
+  vpcIgw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: labstack-igw
+  attachIgwVpc:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref vpc
+      InternetGatewayId: !Ref vpcIgw
+
+## Create a public subnet in each AZ
+  sub1Public:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [ NetworkSettings, global, subPub1Cidr ]
+      AvailabilityZone: !Select [0, !Ref vpcAZs ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: labstack-pub-sub-1
+  sub2Public:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [ NetworkSettings, global, subPub2Cidr ]
+      AvailabilityZone: !Select [1, !Ref vpcAZs ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: labstack-pub-sub-2
+  sub3Public:
+    Type: AWS::EC2::Subnet
+    Condition: cond3AZs
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [ NetworkSettings, global, subPub3Cidr ]
+      AvailabilityZone: !Select [2, !Ref vpcAZs ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: labstack-pub-sub-3
+
+## Associate the public subnets with a public route table
+  rtbPublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpc
+      Tags:
+        - Key: Name
+          Value: labstack-public-rtb
+  rteToIgw:
+    Type: AWS::EC2::Route
+    DependsOn: attachIgwVpc
+    Properties:
+      RouteTableId: !Ref rtbPublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref vpcIgw
+  srta1Public:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref sub1Public
+      RouteTableId: !Ref rtbPublic
+  srta2Public:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref sub2Public
+      RouteTableId: !Ref rtbPublic
+  srta3Public:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: cond3AZs
+    Properties:
+      SubnetId: !Ref sub3Public
+      RouteTableId: !Ref rtbPublic
+
+## Create a private subnet in each AZ
+  sub1Private:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [ NetworkSettings, global, subPrv1Cidr ]
+      AvailabilityZone: !Select [0, !Ref vpcAZs ]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: labstack-prv-sub-1
+  sub2Private:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [ NetworkSettings, global, subPrv2Cidr ]
+      AvailabilityZone: !Select [1, !Ref vpcAZs ]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: labstack-prv-sub-2
+  sub3Private:
+    Type: AWS::EC2::Subnet
+    Condition: cond3AZs
+    Properties:
+      VpcId: !Ref vpc
+      CidrBlock: !FindInMap [ NetworkSettings, global, subPrv3Cidr ]
+      AvailabilityZone: !Select [2, !Ref vpcAZs ]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: labstack-prv-sub-3
+
+## Create a NAT Gateway & EIP
+  natEip:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  vpcNgw:
+    Type: AWS::EC2::NatGateway
+    DependsOn: attachIgwVpc
+    Properties:
+      AllocationId: !GetAtt natEip.AllocationId
+      SubnetId: !Ref sub2Public
+
+## Associate the private subnets with a NATed route table
+  rtbNat:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpc
+      Tags:
+        - Key: Name
+          Value: labstack-nat-rtb
+  rteToNgw:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref rtbNat
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref vpcNgw
+  srta1Ngw:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref sub1Private
+      RouteTableId: !Ref rtbNat
+  srta2Ngw:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref sub2Private
+      RouteTableId: !Ref rtbNat
+  srta3Ngw:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: cond3AZs
+    Properties:
+      SubnetId: !Ref sub3Private
+      RouteTableId: !Ref rtbNat
+
+## Create VPC S3 endpoint
+  s3Enpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref vpc
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      RouteTableIds:
+        - !Ref rtbPublic
+        - !Ref rtbNat
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Principal: '*'
+            Effect: 'Allow'
+            Action: 's3:*'
+            Resource: [ 'arn:aws:s3:::*', 'arn:aws:s3:::*/*' ]
+
+## Create DB subnet group
+  dbSubnets:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: labstack-db-subnet-group
+      SubnetIds: [ !Ref sub1Private, !Ref sub2Private, !If [ cond3AZs, !Ref sub3Private, !Ref "AWS::NoValue" ] ]
+      Tags:
+        - Key: Name
+          Value: labstack-db-subnet-group
+
+## Create bastion security group
+  bastionSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref vpc
+      GroupName: labstack-bastion-host
+      GroupDescription: Aurora Lab SSH Security Group
+      Tags:
+        - Key: Name
+          Value: labstack-bastion-host
+
+## Create Apache Superset security group
+  supersetSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref vpc
+      GroupName: labstack-superset-instance
+      GroupDescription: Aurora Lab Apache Superset Firewall
+      Tags:
+        - Key: Name
+          Value: labstack-superset-instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8088
+          ToPort: 8088
+          CidrIp: 0.0.0.0/0
+          Description: Allows Apache Superset Webport (8088) access
+
+## Create DB security group
+  dbSecGroupCluster:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref vpc
+      GroupName: labstack-mysql-internal
+      GroupDescription: Aurora Lab Database Firewall
+      Tags:
+        - Key: Name
+          Value: labstack-mysql-internal
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref bastionSecGroup
+          Description: Allows MySQL access from bastion host 
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref supersetSecGroup
+          Description: Allows MySQL access from Superset Instance
+
+## Create NACL to simulate regional failure
+  naclDenyAllAccess:
+    Type: AWS::EC2::NetworkAcl
+    Properties: 
+      VpcId: !Ref vpc
+      Tags: 
+        - Key: Name
+          Value: labstack-nacl-denyall
+
+  naclEntryDenyAllEgress:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      CidrBlock: 0.0.0.0/0
+      Egress: true
+      NetworkAclId: !Ref naclDenyAllAccess
+      Protocol: -1
+      RuleAction: deny
+      RuleNumber: 100
+
+  naclEntryDenyAllIngress:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      CidrBlock: 0.0.0.0/0
+      Egress: false
+      NetworkAclId: !Ref naclDenyAllAccess
+      Protocol: -1
+      RuleAction: deny
+      RuleNumber: 100  
+
+## Create enhanced monitoring role
+  roleEnhancedMonitoring:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub labstack-monitor-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - monitoring.rds.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+## Create external integration role
+  roleServiceIntegration:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub labstack-integrate-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - rds.amazonaws.com
+      Policies:
+        - PolicyName: inline-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:AbortMultipartUpload
+                  - s3:DeleteObject
+                  - s3:ListMultipartUploadParts
+                  - s3:PutObject
+                Resource:
+                  - arn:aws:s3:::*/*
+                  - arn:aws:s3:::*
+
+## Create role for bastion host
+  roleBastionHost:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub labstack-bastion-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              Service:
+                - 'ec2.amazonaws.com'
+                - 'ssm.amazonaws.com'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM'
+      Policies:
+        - PolicyName: inline-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rds:*
+                  - s3:*
+                  - ssm:*
+                  - kms:*
+                  - secretsmanager:*
+                  - rds-db:connect
+                Resource: "*"
+  profileBastionHost:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - Ref: roleBastionHost
+
+## Create the Apache Superset host (Amazon Linux 2)
+  supersetHost:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      SubnetId: !Ref sub2Public
+      InstanceType: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionType ]
+      SecurityGroupIds: [ !Ref supersetSecGroup ]
+      Tags:
+        - Key: Name
+          Value: labstack-superset-host
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            DeleteOnTermination: true
+            Iops: 7500
+            VolumeSize: 150
+            VolumeType: io1
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref profileBastionHost
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          cd /tmp
+
+          # update SSM & upgrade packages
+          sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+          sudo systemctl start amazon-ssm-agent
+          source ~/.bashrc
+          sudo yum update -y
+          sudo yum install python37 -y
+          echo "* updated SSM agent and upgraded packages" >> /debug.log
+
+          # path management
+          export PATH=/usr/local/bin:$PATH
+          export PYTHONPATH=/usr/local/bin:$PYTHONPATH
+          alias python=python37
+          alias pip=pip3
+
+          # install superset and mysql client
+          sudo yum install gcc gcc-c++ python3-devel cyrus-sasl-devel mysql mysql-devel -y
+          sudo pip3 install cchardet==1.0.0
+          sudo pip3 install superset
+          sudo pip3 install mysql
+          echo "* installed application packages" >> /debug.log
+
+          # reboot
+          echo "* bootstrap complete, rebooting" >> /debug.log
+          shutdown -r now
+
+## Create the bastion host
+  bastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !Ref sub1Public
+      InstanceType: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionType ]
+      SecurityGroupIds: [ !Ref bastionSecGroup ]
+      Tags:
+        - Key: Name
+          Value: labstack-bastion-host
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            DeleteOnTermination: true
+            Iops: 7500
+            VolumeSize: 150
+            VolumeType: io1
+      ImageId: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionAmi ]
+      IamInstanceProfile: !Ref profileBastionHost
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+
+          # update & upgrade packages
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
+          echo "* updated and upgraded packages" >> /debug.log
+
+          # update SSM agent
+          snap remove amazon-ssm-agent
+          wget https://s3.us-east-2.amazonaws.com/amazon-ssm-us-east-2/latest/debian_amd64/amazon-ssm-agent.deb
+          DEBIAN_FRONTEND=noninteractive dpkg -i amazon-ssm-agent.deb
+          echo "* update ssm-agent to latest" >> /debug.log
+
+          # install jq
+          apt-get -y install jq
+          echo "* installed jq package" >> /debug.log
+
+          # install mysql client tools
+          apt-get -y install mysql-client
+          mysql --version >> /debug.log
+          echo "* installed mysql-client package" >> /debug.log
+
+          # install sysbench
+          curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.deb.sh | sudo bash
+          apt-get update
+          apt-get -y install sysbench
+          sysbench --version >> /debug.log
+          echo "* installed sysbench package" >> /debug.log
+
+          # install percona tpcc-like test suite
+          git clone https://github.com/Percona-Lab/sysbench-tpcc.git /home/ubuntu/sysbench-tpcc
+          chown -R ubuntu:ubuntu /home/ubuntu/sysbench-tpcc
+          echo "* cloned percona/sysbench-tpcc repo" >> /debug.log
+
+          # download demo databases
+          git clone https://github.com/datacharmer/test_db.git /home/ubuntu/samples
+          chown -R ubuntu:ubuntu /home/ubuntu/samples
+          echo "* cloned test databases repo" >> /debug.log
+
+          # install python pip and aws cli
+          apt-get -y install python3-pip
+          pip3 install pymysql
+          pip3 install awscli
+          cd /home/ubuntu
+          curl -O https://awsauroralabsmysql.com/scripts/loadtest.py
+          chown -R ubuntu:ubuntu /home/ubuntu/loadtest.py
+          echo "* pulled load test script" >> /debug.log
+
+          # configure AWS CLI
+          mkdir /home/ubuntu/.aws
+          touch /home/ubuntu/.aws/config
+          echo "[default]" >> /home/ubuntu/.aws/config
+          echo "region = ${AWS::Region}" >> /home/ubuntu/.aws/config
+          chown -R ubuntu:ubuntu /home/ubuntu/.aws/config
+          echo "* configured aws cli" >> /debug.log
+
+          # reboot
+          echo "* bootstrap complete, rebooting" >> /debug.log
+          shutdown -r now
+
+## Create parameter groups for cluster nodes
+  pgNodeParams:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: labstack-node-params
+      Family: aurora5.6
+      Parameters:
+        innodb_stats_persistent_sample_pages: "256"
+        slow_query_log: "1"
+        long_query_time: "10"
+        log_output: FILE
+      Tags:
+        - Key: Name
+          Value: labstack-node-params
+
+## Create cluster parameter group
+  cpgClusterParams:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: labstack-cluster-params
+      Family: aurora5.6
+      Parameters:
+        aws_default_s3_role: !GetAtt roleServiceIntegration.Arn
+      Tags:
+        - Key: Name
+          Value: labstack-cluster-params
+
+## Outputs
+Outputs:
+  vpcId:
+    Description: Aurora Lab VPC
+    Value: !Ref vpc
+  bastionInstanceID:
+    Description: Bastion Instance ID
+    Value: !Ref bastionHost
+  supersetInstanceID:
+    Description: Apache Superset Instance ID
+    Value: !Ref supersetHost
+  bastionPublicDNSName:
+    Description: Bastion Public DNS Name
+    Value: !GetAtt bastionHost.PublicDnsName
+  supersetPublicDNSName:
+    Description: Apache Superset Public DNS Name
+    Value: !GetAtt supersetHost.PublicDnsName
+  dbSubnetGroup:
+    Description: Database Subnet Group
+    Value: !Ref dbSubnets
+  dbSecurityGroup:
+    Description: Database Security Group
+    Value: !Ref dbSecGroupCluster
+
