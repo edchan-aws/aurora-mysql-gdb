@@ -1,4 +1,4 @@
-# <img src="/assets/reinvent19_banner.png" alt="AWS re:Invent 2019">
+# <span class="image">![AWS re:Invent 2019](/assets/reinvent19_banner.png?raw=true)</span>
 
 # [DAT348 - Amazon Aurora Global Database in Action](docs/index.md)
 
