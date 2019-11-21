@@ -1,4 +1,6 @@
-# re:Invent 2019 DAT348 - Amazon Aurora Global Database in Action
+# <img src="./assets/reinvent19_banner.png">
+
+# DAT348 - Amazon Aurora Global Database in Action
 
 In this hands-on workshop, learn how to achieve multi-region resilience for your application backend by using Amazon Aurora global database. We focus on patterns for multi-region database rollout and real-world use cases. Get hands-on and learn how Aurora global database allows you to scale your infrastructure without having to implement complicated multi-region patterns and see how to best leverage Aurora global database for fast cross-region disaster recovery and low-latency global reads.
 
@@ -9,7 +11,7 @@ This workshop uses the Event Engine tool which dispenses individual participants
 
 ## Sign in to the provided AWS accounts
 
-At the beginning of the workshop you have been provided with a **12-character access code**. This access code grants you permission to use a dedicated AWS account for the purposes of this workshop.
+At the beginning of the workshop you should have been provided with a **12-character access code**. This access code grants you permission to use a dedicated AWS account for the purposes of this workshop. If you have not received one, please reach out to one of our support staff at the workshop.
 
 Go to <a href="https://dashboard.eventengine.run/" target="_blank">**https://dashboard.eventengine.run/**</a>, enter the access code and click **Proceed**.
 
@@ -28,17 +30,17 @@ Click **Open Console**. For the purposes of this workshop, you will not need to 
 #### AWS Experience: Intermediate
 #### Time to Complete: 60-100 minutes
 
-We will run the following hands-on labs. Start with the [prerequisites](/reinvent/prerequisites/).
+We will run the following modules. Starting with the [setup](/).
 
-# | Lab Module | Recommendation | Overview
+# | Lab Module |  Overview
 --- | --- | --- | ---
-1 | [**Prerequisites**](/reinvent/prerequisites/) | **Required, start here** | Set up the lab environment and provision the prerequisite resources
-2 | [**Connecting, Loading Data and Auto Scaling**](/reinvent/connect/) | Recommended, for provisioned clusters | Connect to the DB cluster for the first time, load an initial data set and test read replica auto scaling. The initial data set may be used in subsequent labs.
-3 | [**Cloning Clusters**](/reinvent/clone/) | Recommended, for provisioned clusters | Clone an Aurora DB cluster and observing the divergence of the data set.
-4 | [**Backtracking a Cluster**](/reinvent/backtrack/) | Recommended, for provisioned clusters | Backtrack an Aurora DB cluster to fix an accidental DDL operation.
-5 | [**Using Performance Insights**](/reinvent/perf-insights/) | Recommended, for provisioned clusters | Examine the performance of your DB instances using RDS Performance Insights
-6 | [**Creating a Serverless Aurora Cluster**](/reinvent/create-serverless/) | Recommended, for serverless clusters | Create a new Amazon Aurora Serverless MySQL DB cluster manually. You may skip the provisioned cluster labs if you are planning to operate a serverless workload.
-7 | [**Using Aurora Serverless with Lambda Functions**](/reinvent/connect-serverless/) | Recommended, for serverless clusters | Connect to your serverless cluster using the RDS Data API and Lambda functions. Requires the previous lab.
+1 | [**Setup**](/setup/index.md) | Set up the lab environment and provision the prerequisite resources
+2 | [**Create Global Database**](/) | Create Global Database
+3 | [**Connect Application**](/) | Connect BI apps
+4 | [**Monitor Latency**](/) | Use CloudWatch to monitor for latency.
+5 | [**Using Parameter Groups**](/) | Use different Parameter Groups
+6 | [**Failover**](/) | Failover to the second region / simulate a regional failure and DR scenario
+7 | [**Failback**](/) | Optional Challenge - failback to original region.
 
 ## Lab environment at a glance
 
@@ -59,7 +61,9 @@ The environment deployed using CloudFormation includes several components:
 *	a <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/what-is-systems-manager.html" target="_blank">AWS Systems Manager</a> command document to execute a load test
 
 
-## Other Aurora-related sessions and Workshops
+## Other related re:Invent 2019 Workshops
 
-* DAT327
-* 
+If you wish to attend other related Aurora and global architecture workshops, please look into your event catalog schedule for the following:
+
+* DAT327-R / DAT327-R1 - Accelerating application development with Amazon Aurora (Workshop)
+* ARC317-R / ARC317-R1 - Building global applications that align to BC/DR objectives (Workshop)
