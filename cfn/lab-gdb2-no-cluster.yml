@@ -31,7 +31,7 @@ Parameters:
   vpcAZs:
     Type: "List<AWS::EC2::AvailabilityZone::Name>"
     Description: List of Availability Zones to use for the subnets in the VPC. Must pick 3 AZs in regions with 3 or more AZs.
-  LatestAmiId:
+  amiIdLatestAmzn2:
     # Use public Systems Manager Parameter to retrieve latest Amazon Linux 2 AMI IDs
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
@@ -527,7 +527,7 @@ Resources:
             Iops: 7500
             VolumeSize: 150
             VolumeType: io1
-      ImageId: !Ref LatestAmiId
+      ImageId: !Ref amiIdLatestAmzn2
       IamInstanceProfile: !Ref profileBastionHost
       UserData:
         Fn::Base64: !Sub |
