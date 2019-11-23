@@ -360,11 +360,11 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref vpc
-      GroupName: labstack-superset-instance
-      GroupDescription: Aurora Lab Apache Superset Firewall
+      GroupName: labstack-superset-host
+      GroupDescription: Aurora Lab Apache Superset Security Group
       Tags:
         - Key: Name
-          Value: labstack-superset-instance
+          Value: labstack-superset-host
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8088

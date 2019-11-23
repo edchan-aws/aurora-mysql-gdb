@@ -1,4 +1,5 @@
 # ![AWS re:Invent 2019](../assets/reinvent19_banner.png)
+# <img src="/assets/reinvent19_banner.png" alt="AWS re:Invent 2019">
 
 # DAT348 - Amazon Aurora Global Database in Action
 
