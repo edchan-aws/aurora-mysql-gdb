@@ -2,7 +2,7 @@
 
 # DAT348 - Amazon Aurora Global Database in Action
 
-In this hands-on workshop, learn how to achieve multi-region resilience for your application backend by using Amazon Aurora global database. We focus on patterns for multi-region database rollout and real-world use cases. Get hands-on and learn how Aurora global database allows you to scale your infrastructure without having to implement complicated multi-region patterns and see how to best leverage Aurora global database for fast cross-region disaster recovery and low-latency global reads.
+In this hands-on workshop, learn how to achieve multi-region resilience for your application backend by using **Amazon Aurora Global Database**. We focus on patterns for multi-region database rollout and real-world use cases. Get hands-on and learn how Aurora global database allows you to scale your infrastructure without having to implement complicated multi-region patterns and see how to best leverage Aurora global database for fast cross-region disaster recovery and low-latency global reads.
 
 ## Requirements
 * AWS Account (Temporary Account provided on day of workshop)
@@ -27,6 +27,20 @@ Click **Open Console**. For the purposes of this workshop, you will not need to 
 
 <span class="image">![EventEngine Open Console](ee-open-console.png?raw=true)</span>
 
+## Conventions
+
+Throughout the workshop, you will be often switching between the two regions that are assigned to you. You can always confirm and change the region on the top of the AWS Console Navigation Menu. The Instructions will clearly define the AWS Region in which you will be performing the action in, as so:
+
+###### `Region 1 (Primary)`     &nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;&nbsp;&nbsp;&nbsp;    `Region 2 (Secondary)`
+
+![img](img for region change)
+
+We will also provide commands for you to run in the terminal. These commands will look like this, with <b><i>highlighted text</i></b> usually replaced by values that are unique to your account settings and resource names:
+
+<pre>
+$ ssh -i <b><i>PRIVATE_KEY.PEM</i></b> ec2-user@<b><i>EC2_PUBLIC_DNS_NAME</i></b>
+</pre>
+
 ## Overview of labs (cleanup desc)
 
 #### AWS Experience: Intermediate
@@ -34,7 +48,7 @@ Click **Open Console**. For the purposes of this workshop, you will not need to 
 
 We will run the following modules. Starting with the [setup](/).
 
-# | Lab Module |  Overview
+\# | Lab Module |  Overview
 --- | --- | ---
 1 | [**Setup**](/setup/index.md) | Set up the lab environment and provision the prerequisite resources
 2 | [**Create Global Database**](/) | Create Global Database
