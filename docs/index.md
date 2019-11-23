@@ -1,4 +1,4 @@
-# ![AWS re:Invent 2019](/assets/reinvent19_banner.png)
+# ![AWS re:Invent 2019](/assets/reinvent19_topbanner.png)
 
 # DAT348 - Amazon Aurora Global Database in Action
 
