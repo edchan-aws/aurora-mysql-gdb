@@ -670,24 +670,24 @@ Resources:
 ## Outputs
 Outputs:
   vpcId:
-    Description: Aurora Lab VPC
+    Description: Region2 Aurora Lab VPC
     Value: !Ref vpc
   bastionInstanceID:
-    Description: Bastion Instance ID
+    Description: Region2 Bastion Instance ID
     Value: !Ref bastionHost
   supersetInstanceID:
-    Description: Apache Superset Instance ID
+    Description: Region2 Apache Superset Instance ID
     Value: !Ref supersetHost
   bastionPublicDNSName:
-    Description: Bastion Public DNS Name
+    Description: Region2 Bastion Public DNS Name
     Value: !GetAtt bastionHost.PublicDnsName
   supersetPublicDNSName:
-    Description: Apache Superset Public DNS Name
+    Description: Region2 Apache Superset Public DNS Name
     Value: !GetAtt supersetHost.PublicDnsName
   dbSubnetGroup:
-    Description: Database Subnet Group
+    Description: Region2 Database Subnet Group
     Value: !Ref dbSubnets
   dbSecurityGroup:
-    Description: Database Security Group
+    Description: Region2 Database Security Group
     Value: !Ref dbSecGroupCluster
 

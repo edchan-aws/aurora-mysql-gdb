@@ -807,25 +807,28 @@ Resources:
 ## Outputs
 Outputs:
   vpcId:
-    Description: Aurora Lab VPC
+    Description: Region1 Aurora Lab VPC
     Value: !Ref vpc
   bastionInstanceID:
-    Description: Bastion Instance ID
+    Description: Region1 Bastion Instance ID
     Value: !Ref bastionHost
   supersetInstanceID:
-    Description: Apache Superset Instance ID
+    Description: Region1 Apache Superset Instance ID
     Value: !Ref supersetHost
   bastionPublicDNSName:
-    Description: Bastion Public DNS Name
+    Description: Region1 Bastion Public DNS Name
     Value: !GetAtt bastionHost.PublicDnsName
   supersetPublicDNSName:
-    Description: Apache Superset Public DNS Name
+    Description: Region1 Apache Superset Public DNS Name
     Value: !GetAtt supersetHost.PublicDnsName
+  supersetURL:
+    Description: Region1 Apache Superset URL Access
+    Value: !Join [ [ !GetAtt supersetHost.PublicDnsName ], ':8088']
   clusterName:
-    Description: Aurora Regional Cluster Name
+    Description: Region1 Aurora Regional Cluster Name
     Value: !Ref dbCluster
   clusterEndpoint:
-    Description: Aurora Regional Cluster Writer Endpoint
+    Description: Region1 Aurora Regional Cluster Writer Endpoint
     Value: !GetAtt dbCluster.Endpoint.Address
   clusterMasterUser:
     Description: Aurora Master Username
@@ -834,14 +837,14 @@ Outputs:
     Description: Aurora Master Password
     Value: !Join ['', ['{{resolve:secretsmanager:', !Ref secretClusterMasterUser, ':SecretString:password}}' ]]
   loadTestRunDoc:
-    Description: Load Test Execution Command Document
+    Description: Region1 Load Test Execution Command Document
     Value: !Ref ssmDocSysbenchTest
   dbSubnetGroup:
-    Description: Database Subnet Group
+    Description: Region1 Database Subnet Group
     Value: !Ref dbSubnets
   dbSecurityGroup:
-    Description: Database Security Group
+    Description: Region1 Database Security Group
     Value: !Ref dbSecGroupCluster
   secretArn:
-    Description: Database Credentials Secret ARN
+    Description: Region1 Database Credentials Secret ARN
     Value: !Ref secretClusterMasterUser

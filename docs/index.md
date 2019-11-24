@@ -29,19 +29,29 @@ Click **Open Console**. For the purposes of this workshop, you will not need to 
 
 ## Conventions
 
-Throughout the workshop, you will be often switching between the two regions that are assigned to you. You can always confirm and change the region on the top of the AWS Console Navigation Menu. The Instructions will clearly define the AWS Region in which you will be performing the action in, as so:
+Due to the multi-region nature of this workshop, you will often be switching between the two regions that has been assigned to you. You can always confirm and change the region on the top of the AWS Console Navigation Menu. __Please be mindful__ that you are performing the actions in the proper region, and these instructions will clearly label the AWS Region in which you will be performing the action in, as so:
 
-###### `Region 1 (Primary)`     &nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;&nbsp;&nbsp;&nbsp;    `Region 2 (Secondary)`
+> **`Region 1 (Primary)`**    &nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;&nbsp;&nbsp;&nbsp;    **`Region 2 (Secondary)`**
 
-![img](img for region change)
+![Console Region Change](/assets/images/region-change.png)
 
-We will also provide commands for you to run in the terminal. These commands will look like this, with <b><i>highlighted text</i></b> usually replaced by values that are unique to your account settings and resource names:
+We will also provide commands for you to run in the terminal [(Systems Manager Session Manager)](https://aws.amazon.com/systems-manager/features/#Session_Manager). These commands will look like this, with <b><i>highlighted text</i></b> usually replaced by values that are unique to your account settings and resource names:
 
 <pre>
 $ ssh -i <b><i>PRIVATE_KEY.PEM</i></b> ec2-user@<b><i>EC2_PUBLIC_DNS_NAME</i></b>
 </pre>
 
-## Overview of labs (cleanup desc)
+You will often also see some sections that are expandable/collapsible to make the instructions more readable:
+
+<details>
+<summary><b>Click here to expand!</b>
+</summary>
+Good job! You expanded for more details! Click again to hide/collapse.
+</details>
+
+#
+
+## Overview of labs (!cleanup)
 
 #### AWS Experience: Intermediate
 #### Time to Complete: 75-100 minutes
@@ -50,8 +60,8 @@ We will run the following modules. Starting with the [setup](/).
 
 \# | Lab Module |  Overview
 --- | --- | ---
-1 | [**Setup**](/setup/index.md) | Set up the lab environment and provision the prerequisite resources
-2 | [**Create Global Database**](/) | Create Global Database
+1 | [**Setup**](setup/index.md) | Creating a Multi-Region workshop environment using AWS CloudFormation
+2 | [**Create Global Database**](gdb/index.md) | Create Aurora Global Database from existing Aurora DB cluster
 3 | [**Connect Application**](/) | Connect BI apps
 4 | [**Monitor Latency**](/) | Use CloudWatch to monitor for latency.
 5 | [**Using Parameter Groups**](/) | Use different Parameter Groups
@@ -59,7 +69,7 @@ We will run the following modules. Starting with the [setup](/).
 7 | [**Failback**](/) | Optional Challenge - failback to original region.
 8 | **Decommission** | Not Required for Event Engine
 
-## Lab environment at a glance (cleanup desc)
+## Lab environment at a glance (!cleanup)
 
 To ensure everyone has a consistent experience, we have created a foundational template for <a href="https://aws.amazon.com/cloudformation/" target="_blank">AWS CloudFormation</a> that provisions the resources needed for the lab environment.
 
