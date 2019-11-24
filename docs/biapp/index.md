@@ -53,7 +53,7 @@ Those who have been familiar with AWS for a while may remember that connecting t
        superset db upgrade
        superset load_examples
        superset init
-       gunicorn -b 0.0.0.0:8088 --limit-request-line 0 --limit-request-field_size 0 superset:app &
+       nohup gunicorn -b 0.0.0.0:8088 --limit-request-line 0 --limit-request-field_size 0 superset:app &
        ```
 
     1. The application will take a minute or two to build samples and initialize. Once you see the message similar to those below, Superset is running, with the service running by a web server on TCP port 8088.
@@ -74,7 +74,7 @@ Those who have been familiar with AWS for a while may remember that connecting t
 
 1. Open a new browser tab or window. Paste the URL value into your address bar, then press enter.
 
-1. You should see the login page for Superset. Type in ```admin``` for **Username** and the password from previous setup step.
+1. You should see the login page for Superset. Type in ```admin``` for **Username** and the password you have entered from previous setup step.
 
     ![Superset Login](./superset-login.png)
 

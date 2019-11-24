@@ -62,11 +62,11 @@ We will run the following modules. Starting with the [setup](/).
 --- | --- | ---
 1 | [**Setup**](setup/index.md) | Creating a Multi-Region workshop environment using AWS CloudFormation
 2 | [**Create Global Database**](gdb/index.md) | Create Aurora Global Database from existing Aurora DB cluster
-3 | [**Connect Application**](/) | Connect BI apps
-4 | [**Monitor Latency**](/) | Use CloudWatch to monitor for latency.
-5 | [**Using Parameter Groups**](/) | Use different Parameter Groups
-6 | [**Failover**](/) | Failover to the second region / simulate a regional failure and DR scenario
-7 | [**Failback**](/) | Optional Challenge - failback to original region.
+3 | [**Connect Application**](biapp/index.md) | Connect BI applications
+4 | [**Monitor Latency**](cw/index.md) | Use CloudWatch to monitor for latency
+5 | [**Using Parameter Groups**](pg/index.md) | Use different Parameter Groups
+6 | [**Failover**](failover/index.md) | Failover to the second region / simulate a regional failure and DR scenario
+7 | [**Failback**](failback/index.md) | Optional Challenge - failback to original region.
 8 | **Decommission** | Not Required for Event Engine
 
 ## Lab environment at a glance (!cleanup)
