@@ -24,7 +24,7 @@
 ## This sample code is made available under the MIT-0 license. See the LICENSE file.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Amazon Aurora Labs for MySQL - Global Database Fork (Region2)
+Description: Amazon Aurora Labs for MySQL - Global Database Workshop (reInvent DAT348 Region2)
 
 ## Parameters
 Parameters:
@@ -45,79 +45,79 @@ Mappings:
   RegionalSettings:
     us-east-1:
       bastionAmi: ami-024582e76075564db
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Ohio
       azs: "3"
     us-east-2:
       bastionAmi: ami-090a9429be63ca087
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: N. Virginia
       azs: "3"
     us-west-1:
       bastionAmi: ami-0c6eca62e6c7dacff
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: N. California
       azs: "2"
     us-west-2:
       bastionAmi: ami-09c08e9cd8d9c1b93
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Oregon
       azs: "3"
     eu-central-1:
       bastionAmi: ami-0fd6d676e2e90dc7b
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Frankfurt
       azs: "3"
     eu-west-1:
       bastionAmi: ami-08f053fa3d25478f4
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Ireland
       azs: "3"
     eu-west-2:
       bastionAmi: ami-012d95ddd53c98e0e
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: London
       azs: "3"
     eu-west-3:
       bastionAmi: ami-0001c7938b8e89312
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Paris
       azs: "3"
     ap-southeast-1:
       bastionAmi: ami-0f8c65cdcc35d0a72
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Singapore
       azs: "3"
     ap-southeast-2:
       bastionAmi: ami-056280928f86f80a8
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Sydney
       azs: "3"
     ap-south-1:
       bastionAmi: ami-03d48fdf7c142da15
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Mumbai
       azs: "3"
     ap-northeast-1:
       bastionAmi: ami-0193f3ddafc2d8921
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Tokyo
       azs: "3"
     ap-northeast-2:
       bastionAmi: ami-0b0d9551c4775f4e4
-      bastionType: m5.large
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Seoul
       azs: "3"
@@ -549,7 +549,7 @@ Resources:
           alias pip=pip3
 
           # install superset and mysql client
-          sudo yum install gcc gcc-c++ python3-devel cyrus-sasl-devel mysql mysql-devel -y
+          sudo yum install gcc gcc-c++ python3-devel cyrus-sasl-devel mysql mysql-devel jq -y
           sudo pip3 install cchardet==1.0.0
           sudo pip3 install superset
           sudo pip3 install mysql

@@ -40,7 +40,7 @@ Those who have been familiar with AWS for a while may remember that connecting t
        * First Name (press enter for default)
        * Last Name (press enter for default)
        * Email (press enter for default)
-       * Password (enter your password, don't forget this!)
+       * Password (create your password, <span style="color:red;">don't forget this!</span>)
        * Repeat for Confirmation (confirm your password)
 
     1. Once complete you will receive the message that admin has been created
@@ -80,9 +80,28 @@ Those who have been familiar with AWS for a while may remember that connecting t
 
 1. If login is successful, you will then be taken to the Superset main dashboard. Congratulations!
 
+1. Apache Superset has a bunch of local sample data installed on the EC2 instance. However we will not be using them for the workshop. Let's create a new datasource for Apache Superset, our Aurora Global Database.
+
+   1. In the Apache Superset navigation menu, mouse over **Sources**, then click on **Databases**.
+
+   1. Click on the ![Add Database Source](superset-source-add.png?raw=true) icon to add a new database source:
+
+   1. Change the below values and press **Save** when done.
+
+     Field | Value and Description
+     ----- | ----- | -----
+     Database | <pre>aurora-gdb1-write</pre> <br> This will be the friendly name of our Aurora Database in Superset
+     SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region1GDBwriteEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region1clusterEndpoint in the output of your CloudFormation template. Click on **Test Connection** to confirm.
+     Expose in SQL Lab | :ballot_box_with_check: 
+     Allow CREATE TABLE AS | :ballot_box_with_check: 
+     Allow DML | :ballot_box_with_check: 
+
+   4. 
 # 
 
 
 >  **`Region 2 (Secondary)`** 
 
 1. Repeat steps above for Secondary region.
+
+1. Setup read connection from superset to AuroraGDB

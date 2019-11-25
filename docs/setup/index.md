@@ -68,6 +68,7 @@ At this point, you should have the base resources provisioned in the following:
 > **`Region 1 (Primary)`**
 
 * Basic VPC with public and private subnets across 3 availability zones; security groups
+* VPC NACLs (for failure injection)
 * Amazon EC2 Instance for Bastion Host
 * Amazon EC2 Instance with Apache Superset (Our BI Application)
 * Amazon Aurora Regional Cluster

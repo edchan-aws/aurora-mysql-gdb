@@ -5,9 +5,9 @@
 In this hands-on workshop, learn how to achieve multi-region resilience for your application backend by using **Amazon Aurora Global Database**. We focus on patterns for multi-region database rollout and real-world use cases. Get hands-on and learn how Aurora global database allows you to scale your infrastructure without having to implement complicated multi-region patterns and see how to best leverage Aurora global database for fast cross-region disaster recovery and low-latency global reads.
 
 ## Requirements
-* AWS Account (Temporary Account provided on day of workshop)
+* AWS Account (Temporary accounts will be provided for AWS Events)
 * [Mozilla Firefox](https://www.mozilla.org/firefox/) or [Google Chrome](https://www.google.com/chrome/) web browser
-* _PREFERRED:_ Familiarity with AWS [CLI](https://aws.amazon.com/cli), Console (EC2, RDS)
+* _PREFERRED:_ Familiarity with AWS [CLI](https://aws.amazon.com/cli), Management Console (EC2, RDS, VPC, CloudWatch), and basic SQL commands.
 
 ## Use the provided temporary AWS accounts
 
@@ -62,11 +62,11 @@ We will run the following modules. Starting with the [setup](/).
 --- | --- | ---
 1 | [**Setup**](setup/index.md) | Creating a Multi-Region workshop environment using AWS CloudFormation
 2 | [**Create Global Database**](gdb/index.md) | Create Aurora Global Database from existing Aurora DB cluster
-3 | [**Connect Application**](biapp/index.md) | Connect BI applications
+3 | [**Connect Application**](biapp/index.md) | Connect BI applications; Global Database in Action
 4 | [**Monitor Latency**](cw/index.md) | Use CloudWatch to monitor for latency
-5 | [**Using Parameter Groups**](pg/index.md) | Use different Parameter Groups
+5 | [**Using Parameter Groups**](pg/index.md) | Optional - Use different Parameter Groups
 6 | [**Failover**](failover/index.md) | Failover to the second region / simulate a regional failure and DR scenario
-7 | [**Failback**](failback/index.md) | Optional Challenge - failback to original region.
+7 | [**Failback**](failback/index.md) | Optional - Failback to original region.
 8 | **Decommission** | Not Required for Event Engine
 
 ## Lab environment at a glance (!cleanup)
