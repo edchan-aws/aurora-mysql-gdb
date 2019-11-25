@@ -89,7 +89,7 @@ Those who have been familiar with AWS for a while may remember that connecting t
    1. Change the below values and press **Save** when done.
 
      Field | Value and Description
-     ----- | ----- | -----
+     ----- | -----
      Database | <pre>aurora-gdb1-write</pre> <br> This will be the friendly name of our Aurora Database in Superset
      SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region1GDBwriteEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region1clusterEndpoint in the output of your CloudFormation template. Click on **Test Connection** to confirm.
      Expose in SQL Lab | :ballot_box_with_check: 
