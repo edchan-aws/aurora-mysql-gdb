@@ -193,7 +193,7 @@ Those who have been familiar with AWS for a while may remember that connecting t
       Allow CREATE TABLE AS | :ballot_box_with_check:
       Allow DML | :ballot_box_with_check:
 
-      ![Superset GDB1 Write Settings](superset-gdb1w.png)
+      ![Superset GDB2 Read Settings](superset-gdb2r.png)
    
    4. 
 
