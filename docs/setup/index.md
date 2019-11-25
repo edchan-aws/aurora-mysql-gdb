@@ -15,7 +15,7 @@ On the upper right corner of the AWS Console, click on the region and select you
 
 <a href="https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=labstack&templateURL=https://s3.amazonaws.com/[[bucket]]/templates/lab-with-cluster.yml" target="_blank"><img src="/assets/images/cloudformation-launch-stack.png" alt="Launch Stack - Primary"></a>
 
-Click <a href=" " target="_blank">Launch Stack</a> to deploy the workshop environment. You can also download the [lab-gdb1-with-cluster.yml](/cfn/lab-gdb1-with-cluster) template and manually upload it to CloudFormation.
+Click <a href=" " target="_blank">Launch Stack</a> to deploy the workshop environment. You can also download the [lab-gdb1-with-cluster.yml](/cfn/lab-gdb1-with-cluster.yml) template and manually upload it to CloudFormation.
 
 The desired template should be pre-selected under **Amazon S3 URL**, click **Next**.
 
@@ -53,7 +53,7 @@ On the upper right corner of the AWS Console, click on your existing primary reg
 
 <a href="https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=labstack&templateURL=https://s3.amazonaws.com/[[bucket]]/templates/lab-with-cluster.yml" target="_blank"><img src="/assets/images/cloudformation-launch-stack.png" alt="Launch Stack - Secondary"></a>
 
-Click <a href=" " target="_blank">Launch Stack</a> to deploy the workshop environment. You can also download the [lab-gdb2-no-cluster.yml](/cfn/lab-gdb2-no-cluster) template and manually upload it to CloudFormation.
+Click <a href=" " target="_blank">Launch Stack</a> to deploy the workshop environment. You can also download the [lab-gdb2-no-cluster.yml](/cfn/lab-gdb2-no-cluster.yml) template and manually upload it to CloudFormation.
 
 ! Copy next steps from Region 1 after finalization
 
