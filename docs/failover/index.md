@@ -145,7 +145,7 @@ As we are simulating a prolonged regional infrastructure or service level failur
     SELECT * FROM mylab.failovertest1;    
     ```
 
-1. (!Cleanup) You should notice both your previous results and the new record. Your application is now serving both read and write queries and serve your users as normal, during a region-wide disruption!
+1. (!Cleanup) You should notice both your previous results before failover and the new record. Your application is now serving both read and write queries and serve your users as normal, during a region-wide disruption!
 
     * In a real world scenario, you might want to front load your application tier with a application load balancer. Should you want to have seamless transition for your endpoint that handles write DML queries, you can also combine your applications with Route53 Active-Passive failover. These configurations are outside the scope of this particular workshop, but you can find more information on such architecture on AWS website:
         * https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-types.html#dns-failover-types-active-passive
