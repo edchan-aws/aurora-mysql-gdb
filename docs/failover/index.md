@@ -2,7 +2,7 @@
 
 This lab contains the following tasks:
 
-## 5. Failover to the secondary region / simulate a regional failure and DR scenario
+## 6. Failover to the secondary region / simulate a regional failure and DR scenario
 
 When used in combination with in-region replicas, an Aurora cluster gives you automatic failover capabilities within the region. With Aurora Global Database, you can perform a manual failover to the cluster in your secondary region, such that your database can survive in the unlikely scenario of an entire region's infrastructure or service becoming unavailable.
 
@@ -51,19 +51,19 @@ Although we can simulate a failure with the Aurora-specific failure injection qu
 
 1. In the AWS Management Console, ensure that you are working within your assigned primary region. Use the Service menu and click on **VPC** or simply type **VPC** into the search bar. This will bring up the Amazon VPC console.
 
-1. Within the VPC console, scroll to down on the left menu and select **Network ACLs**. This will bring you to the list of NACLs that the subnets are in your VPC. You should see **labstack-nacl-denyall** , and that it is not associated with any subnets.
+1. Within the VPC console, scroll down on the left menu and select **Network ACLs**. This will bring you to the list of NACLs that are in your VPC. You should see **labstack-nacl-denyall** , and that it is not currently associated with any subnets.
 
-1. Click on the **labstack-nacl-denyall** NACL, and review both the Inbound Rules and Outbound Rules. You should see that they're set to DENY for ALL traffic.
+    * Click on the **labstack-nacl-denyall** NACL, and review both the Inbound Rules and Outbound Rules. You should see that they're set to *DENY* for ALL traffic.
 
-1. Click on **Actions** menu, and then select **Edit** subnet associations**
+1. Click on **Actions** menu, and then select **Edit subnet associations**
   ![NACLs Review](failover-nacl1.png)
 
-1. As the Aurora Cluster is set to use the private-subnets, with the prefix description **labstack-prv-sub-x**, select all subnets that begin with that prefix description. Then click on the **Edit** button to confirm the associations. (Note: you may have to drag the first column wider to fully see the subnet names)
+1. As the Aurora Cluster is set to use the private subnets (governed by DB subnet group), all of which labeled with the prefix **labstack-prv-sub-X**, select all subnets that begin with that prefix description. Then click on the **Edit** button to confirm the associations. (Note: you may have to drag the first column wider to fully see the subnet names)
     ![NACLs Review](failover-nacl2.png)
 
 1. Once associated. Go back to your browser tab with your primary region's Apache Superset SQL Editor. Click on the :repeat: refresh button next to **Schema**.
 
-1. You will notice that you can no longer access the primary cluster, and the schema refresh will eventually time out.
+1. You will notice that you can no longer access the primary cluster, and the schema refresh will eventually time out. We have successfully injected failure to render our Primary DB Cluster unreachable.
 
 ### Promote Secondary DB Cluster
 
@@ -75,13 +75,13 @@ As we are simulating a prolonged regional infrastructure or service level failur
 
 1. Within the RDS console, select **Databases** on the left menu. This will bring you to the list of Databases already deployed. You should see **!gdbRegion2Cluster**  and **!gdbRegion2Instance** . 
 
-    * Note: You might also notice that in your RDS console it will still report the primary region DB cluster and DB instance still as *healthy*, that is because we are simulating a failure by blocking all networking access via NACLs in your AWS Account; the RDS/Aurora service and its internal health checks are provided by the service control plane itself and will still report the DB cluster and DB instance as healthy because there is no *real* outage.
+    * Note: You might also notice that in your RDS console it will still report the primary region DB cluster and DB instance still as *healthy*, that is because we are simulating a failure by blocking all networking access via NACLs, and the blast radius of such a simulation is limited only to your AWS Account; the RDS/Aurora service and its internal health checks are provided by the service control plane itself and will still report the DB cluster and DB instance as healthy because there is no *real outage*.
 
 1. Select the secondary DB Cluster. Click on the **Actions** menu, then select **Remove from Global**
     ![Aurora Promote Secondary](failover-aurora-promote1.png)
     * A message will pop up asking you to confirm that this will break replication from the primary DB cluster. Confirm by click on **Remove and promote**.
 
-1. The promote process should take about 1-2 minutes. Once complete, you should be able to see the previously secondary DB cluster is now labeled as **Regional** and the DB instance is now a **Writer** node.
+1. The promote process should take less than 1 minute. Once complete, you should be able to see the previously secondary DB cluster is now labeled as **Regional** and the DB instance is now a **Writer** node.
     ![Aurora Promote Secondary](failover-aurora-promote2.png)
 
 1. Click on the newly promoted DB cluster. Under the **Connectivity and security** tab, the *Writer* endpoint should now be listed as *Available*. Copy and paste the endpoint string into your notepad as we prepare for failover on the application stack and adding this endpoint as the new writer.  
@@ -116,7 +116,7 @@ As we are simulating a prolonged regional infrastructure or service level failur
     SELECT * FROM mylab.failovertest1;    
     ```
 
-1. Remember our secondary instance previously utilized the specific Reader endpoint for the Global Database cluster, and the Writer endpoint was previously unavailable as a Secondary DB Cluster. As this database backend is now promoted to a writer, we can add a new datasource with the new writer endpoint to allow this instance of Apache Superset to serve write requests.
+1. Remember our secondary region Apache Superset instance previously utilized the specific Reader endpoint for the Global Database cluster, and the Writer endpoint was previously unavailable as a Secondary DB Cluster. As this database backend is now promoted to a writer, we can add a new datasource using the new writer endpoint to allow this instance of Apache Superset to serve write requests.
 
    1. In the Apache Superset navigation menu, mouse over **Sources**, then click on **Databases**.
       ![Superset Source Databases](../biapp/superset-source-db.png)
@@ -130,8 +130,17 @@ As we are simulating a prolonged regional infrastructure or service level failur
       Database | <pre>aurora-gdb2-write</pre> <br> This will be the friendly name of our Aurora Database in Superset<br>&nbsp;
       SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region2GDBwriteEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region2clusterEndpoint in the previous step. Click on **Test Connection** to confirm.<br>&nbsp;
       Expose in SQL Lab | :ballot_box_with_check: (Checked)
-      Allow CREATE TABLE AS | :ballot_box_with_check: (Unchecked)
-      Allow DML | :ballot_box_with_check: (Checked)
+      Allow CREATE TABLE AS | :black_square_button: (Unchecked)
+      Allow DML | :black_square_button: (Unchecked)
 
       ![Superset GDB2 Write Settings](../biapp/superset-gdb2w.png)
-   
+
+1. Return to SQL Editor. Copy and paste the following DML query again and click on **Run Query** 
+
+    ```
+    INSERT INTO mylab.failovertest1 (gen_number, some_text, input_dt) 
+    VALUES (200,"region-2-input",now());
+    COMMIT;
+
+    SELECT * FROM mylab.failovertest1;    
+    ```

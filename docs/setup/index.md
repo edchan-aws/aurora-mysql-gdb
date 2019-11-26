@@ -67,7 +67,7 @@ At this point, you should have the base resources provisioned in the following:
 
 > **`Region 1 (Primary)`**
 
-* Basic VPC with public and private subnets across 3 availability zones; security groups
+* Basic VPC with public and private subnets across 3 availability zones; security groups and NAT Gateway
 * VPC NACLs (for failure injection)
 * Amazon EC2 Instance for Bastion Host
 * Amazon EC2 Instance with Apache Superset (Our BI Application)
@@ -76,7 +76,8 @@ At this point, you should have the base resources provisioned in the following:
 
 > **`Region 2 (Secondary)`**
 
-* Basic VPC with public and private subnets across 3 availability zones; security groups
+* Basic VPC with public and private subnets across 3 availability zones; security groups and NAT Gateway
 * Amazon EC2 Instance for Bastion Host
 * Amazon EC2 Instance with Apache Superset (Our BI Application)
+* Amazon RDS DB subnet group for Aurora
 
