@@ -95,9 +95,9 @@ Those who have been familiar with AWS for a while may remember that connecting t
       ----- | -----
       Database | <pre>aurora-gdb1-write</pre> <br> This will be the friendly name of our Aurora Database in Superset<br>&nbsp;
       SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region1GDBwriteEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region1clusterEndpoint in the output of your CloudFormation template. Click on **Test Connection** to confirm.<br>&nbsp;
-      Expose in SQL Lab | :ballot_box_with_check:
-      Allow CREATE TABLE AS | :ballot_box_with_check:
-      Allow DML | :ballot_box_with_check:
+      Expose in SQL Lab | :ballot_box_with_check: (Checked)
+      Allow CREATE TABLE AS | :ballot_box_with_check: (Checked)
+      Allow DML | :ballot_box_with_check: (Checked)
 
       ![Superset GDB1 Write Settings](superset-gdb1w.png)
    
@@ -189,9 +189,9 @@ Those who have been familiar with AWS for a while may remember that connecting t
       ----- | -----
       Database | <pre>aurora-gdb2-read</pre> <br> This will be the friendly name of our Aurora Database in Superset<br>&nbsp;
       SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region2GDBReadEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region2clusterEndpoint in the output of your CloudFormation template. Click on **Test Connection** to confirm.<br>&nbsp;
-      Expose in SQL Lab | :black_square_button:
-      Allow CREATE TABLE AS | :black_square_button:
-      Allow DML | :black_square_button:
+      Expose in SQL Lab | :ballot_box_with_check: (Checked)
+      Allow CREATE TABLE AS | :black_square_button: (Unchecked)
+      Allow DML | :black_square_button: (Unchecked)
 
       ![Superset GDB2 Read Settings](superset-gdb2r.png)
    

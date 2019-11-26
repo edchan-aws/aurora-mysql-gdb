@@ -129,9 +129,9 @@ As we are simulating a prolonged regional infrastructure or service level failur
       ----- | -----
       Database | <pre>aurora-gdb2-write</pre> <br> This will be the friendly name of our Aurora Database in Superset<br>&nbsp;
       SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region2GDBwriteEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region2clusterEndpoint in the previous step. Click on **Test Connection** to confirm.<br>&nbsp;
-      Expose in SQL Lab | :ballot_box_with_check:
-      Allow CREATE TABLE AS | :ballot_box_with_check:
-      Allow DML | :ballot_box_with_check:
+      Expose in SQL Lab | :ballot_box_with_check: (Checked)
+      Allow CREATE TABLE AS | :ballot_box_with_check: (Unchecked)
+      Allow DML | :ballot_box_with_check: (Checked)
 
       ![Superset GDB2 Write Settings](../biapp/superset-gdb2w.png)
    
