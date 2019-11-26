@@ -1,5 +1,5 @@
 ---
-## Amazon Aurora Labs for MySQL
+## Amazon Aurora Labs for MySQL - Global Database
 ## Infrastructure template with an Aurora cluster for lab exercises
 ##
 ## Changelog:
@@ -13,7 +13,7 @@
 ## 2019-09-19 - Fixed resource names to enable EE
 ## 2019-09-23 - Removed custom Lambda resource, using native role assignment
 ## 2019-09-23 - Removed !Sub references on static names to pass linter
-## 2019-10-01 - Forked for Global Database Infrastructure
+## 2019-10-01 - edchan@ Forked for Global Database Infrastructure
 ## 2019-10-18 - Updates to Allowed Regions (Global database Availability)
 ## 2019-11-10 - Added Apache Superset EC2 launch
 ##
@@ -24,13 +24,10 @@
 ## This sample code is made available under the MIT-0 license. See the LICENSE file.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Amazon Aurora Labs for MySQL - Global Database Workshop (reInvent DAT348 Region1)
+Description: Amazon Aurora Labs for MySQL - Global Database Workshop (reInvent DAT348 Region2)
 
 ## Parameters
 Parameters:
-  vpcAZs:
-    Type: "List<AWS::EC2::AvailabilityZone::Name>"
-    Description: List of Availability Zones to use for the subnets in the VPC. Must pick 3 AZs in regions with 3 or more AZs.               
   amiIdLatestAmzn2:
     # Use public Systems Manager Parameter to retrieve latest Amazon Linux 2 AMI IDs
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
@@ -49,120 +46,87 @@ Mappings:
       biappType: m5.large
       nodeType: db.r5.large
       name: N. Virginia
-      azs: "3"
-      availabilityZone1: us-east-1a
-      availabilityZone2: us-east-1b
-      availabilityZone3: us-east-1c      
+      azs: "3"    
     us-east-2:
       bastionAmi: ami-090a9429be63ca087
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Ohio
-      azs: "3"
-      availabilityZone1: us-east-2a
-      availabilityZone2: us-east-2b
-      availabilityZone3: us-east-2c      
+      azs: "3"   
     us-west-2:
       bastionAmi: ami-09c08e9cd8d9c1b93
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Oregon
-      azs: "3"
-      availabilityZone1: us-west-2a
-      availabilityZone2: us-west-2b
-      availabilityZone3: us-west-2c       
+      azs: "3"      
     eu-central-1:
       bastionAmi: ami-0fd6d676e2e90dc7b
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Frankfurt
-      azs: "3"
-      availabilityZone1: eu-central-1a
-      availabilityZone2: eu-central-1b
-      availabilityZone3: eu-central-1c  
+      azs: "3" 
     eu-west-1:
       bastionAmi: ami-08f053fa3d25478f4
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Ireland
-      azs: "3"
-      availabilityZone1: eu-central-1a
-      availabilityZone2: eu-central-1b
-      availabilityZone3: eu-central-1c        
+      azs: "3"      
     eu-west-2:
       bastionAmi: ami-012d95ddd53c98e0e
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: London
-      azs: "3"
-      availabilityZone1: eu-west-2a
-      availabilityZone2: eu-west-2b
-      availabilityZone3: eu-west-2c        
+      azs: "3"       
     eu-west-3:
       bastionAmi: ami-0001c7938b8e89312
-      bastionType: m4.large
+      bastionType: m5.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Paris
-      azs: "3"
-      availabilityZone1: eu-west-3a
-      availabilityZone2: eu-west-3b
-      availabilityZone3: eu-west-3c       
+      azs: "3"     
     ap-southeast-1:
       bastionAmi: ami-0f8c65cdcc35d0a72
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Singapore
-      azs: "3"
-      availabilityZone1: ap-southeast-1a
-      availabilityZone2: ap-southeast-1b
-      availabilityZone3: ap-southeast-1c          
+      azs: "3"         
     ap-southeast-2:
       bastionAmi: ami-056280928f86f80a8
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Sydney
-      azs: "3"
-      availabilityZone1: ap-southeast-2a
-      availabilityZone2: ap-southeast-2b
-      availabilityZone3: ap-southeast-2c        
+      azs: "3"       
     ap-northeast-1:
       bastionAmi: ami-0193f3ddafc2d8921
       bastionType: m4.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Tokyo
-      azs: "3"
-      availabilityZone1: ap-northeast-1a
-      availabilityZone2: ap-northeast-1b
-      availabilityZone3: ap-northeast-1c        
+      azs: "3"       
     ap-northeast-2:
       bastionAmi: ami-0b0d9551c4775f4e4
-      bastionType: m4.large
+      bastionType: m5.large
       biappType: m5.large      
       nodeType: db.r5.large
       name: Seoul
       azs: "3"
-      availabilityZone1: ap-northeast-2a
-      availabilityZone2: ap-northeast-2b
-      availabilityZone3: ap-northeast-2c       
   NetworkSettings:
     global:
-      # Region 1 CIDR on 172.31.0.0/16 in the event peering is required
-      vpcCidr: 172.31.0.0/16
-      subPub1Cidr: 172.31.0.0/24
-      subPub2Cidr: 172.31.1.0/24
-      subPub3Cidr: 172.31.2.0/24
-      subPrv1Cidr: 172.31.10.0/24
-      subPrv2Cidr: 172.31.11.0/24
-      subPrv3Cidr: 172.31.12.0/24
+      # Region 2 CIDR on 172.32.0.0/16 in the event peering is required
+      vpcCidr: 172.32.0.0/16
+      subPub1Cidr: 172.32.0.0/24
+      subPub2Cidr: 172.32.1.0/24
+      subPub3Cidr: 172.32.2.0/24
+      subPrv1Cidr: 172.32.10.0/24
+      subPrv2Cidr: 172.32.11.0/24
+      subPrv3Cidr: 172.32.12.0/24
       sshSourceCidr: 0.0.0.0/0
   ClusterSettings:
     global:
@@ -193,7 +157,7 @@ Resources:
       CidrBlock: !FindInMap [ NetworkSettings, global, vpcCidr ]
       Tags:
         - Key: Name
-          Value: labstack-vpc
+          Value: !Sub "${AWS::StackName}-vpc"
 
 ## Create an IGW & attach it to the VPC
   vpcIgw:
@@ -201,7 +165,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: labstack-igw
+          Value: !Sub "${AWS::StackName}-igw"
   attachIgwVpc:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -214,32 +178,37 @@ Resources:
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPub1Cidr ]
-      AvailabilityZone: !Select [0, !Ref vpcAZs ]
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: labstack-pub-sub-1
+          Value: !Sub "${AWS::StackName}-pub-sub-1"
   sub2Public:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPub2Cidr ]
-      AvailabilityZone: !Select [1, !Ref vpcAZs ]
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: labstack-pub-sub-2
+          Value: !Sub "${AWS::StackName}-pub-sub-2"
   sub3Public:
     Type: AWS::EC2::Subnet
-    Condition: cond3AZs
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPub3Cidr ]
-      AvailabilityZone: !Select [2, !Ref vpcAZs ]
+      AvailabilityZone: !Select 
+        - 2
+        - Fn::GetAZs: !Ref 'AWS::Region'
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: labstack-pub-sub-3
+          Value: !Sub "${AWS::StackName}-pub-sub-3"
 
 ## Associate the public subnets with a public route table
   rtbPublic:
@@ -248,7 +217,7 @@ Resources:
       VpcId: !Ref vpc
       Tags:
         - Key: Name
-          Value: labstack-public-rtb
+          Value: !Sub "${AWS::StackName}-public-rtb"
   rteToIgw:
     Type: AWS::EC2::Route
     DependsOn: attachIgwVpc
@@ -268,7 +237,6 @@ Resources:
       RouteTableId: !Ref rtbPublic
   srta3Public:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: cond3AZs
     Properties:
       SubnetId: !Ref sub3Public
       RouteTableId: !Ref rtbPublic
@@ -279,32 +247,37 @@ Resources:
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPrv1Cidr ]
-      AvailabilityZone: !Select [0, !Ref vpcAZs ]
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: labstack-prv-sub-1
+          Value: !Sub "${AWS::StackName}-prv-sub-1"
   sub2Private:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPrv2Cidr ]
-      AvailabilityZone: !Select [1, !Ref vpcAZs ]
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: labstack-prv-sub-2
+          Value: !Sub "${AWS::StackName}-prv-sub-2"
   sub3Private:
     Type: AWS::EC2::Subnet
-    Condition: cond3AZs
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPrv3Cidr ]
-      AvailabilityZone: !Select [2, !Ref vpcAZs ]
+      AvailabilityZone: !Select 
+        - 2
+        - Fn::GetAZs: !Ref 'AWS::Region'
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: labstack-prv-sub-3
+          Value: !Sub "${AWS::StackName}-prv-sub-3"
 
 ## Create a NAT Gateway & EIP
   natEip:
@@ -325,7 +298,7 @@ Resources:
       VpcId: !Ref vpc
       Tags:
         - Key: Name
-          Value: labstack-nat-rtb
+          Value: !Sub "${AWS::StackName}-nat-rtb"
   rteToNgw:
     Type: AWS::EC2::Route
     Properties:
@@ -344,7 +317,6 @@ Resources:
       RouteTableId: !Ref rtbNat
   srta3Ngw:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: cond3AZs
     Properties:
       SubnetId: !Ref sub3Private
       RouteTableId: !Ref rtbNat
@@ -370,33 +342,33 @@ Resources:
   dbSubnets:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: labstack-db-subnet-group
-      SubnetIds: [ !Ref sub1Private, !Ref sub2Private, !If [ cond3AZs, !Ref sub3Private, !Ref "AWS::NoValue" ] ]
+      DBSubnetGroupDescription: !Sub ${AWS::StackName}-db-subnet-group
+      SubnetIds: [ !Ref sub1Private, !Ref sub2Private, !Ref sub3Private ]
       Tags:
         - Key: Name
-          Value: labstack-db-subnet-group
+          Value: !Sub "${AWS::StackName}-db-subnet-group"
 
 ## Create bastion security group
   bastionSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref vpc
-      GroupName: labstack-bastion-host
+      GroupName: !Sub ${AWS::StackName}-bastion-host
       GroupDescription: Aurora Lab SSH Security Group
       Tags:
         - Key: Name
-          Value: labstack-bastion-host
+          Value: !Sub "${AWS::StackName}-bastion-host"
 
 ## Create Apache Superset security group
   supersetSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref vpc
-      GroupName: labstack-superset-host
+      GroupName: !Sub ${AWS::StackName}-superset-host
       GroupDescription: Aurora Lab Apache Superset Security Group
       Tags:
         - Key: Name
-          Value: labstack-superset-host
+          Value: !Sub "${AWS::StackName}-superset-host"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8088
@@ -409,11 +381,11 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref vpc
-      GroupName: labstack-mysql-internal
+      GroupName: !Sub ${AWS::StackName}-mysql-internal
       GroupDescription: Aurora Lab Database Firewall
       Tags:
         - Key: Name
-          Value: labstack-mysql-internal
+          Value: !Sub "${AWS::StackName}-mysql-internal"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
@@ -433,7 +405,7 @@ Resources:
       VpcId: !Ref vpc
       Tags: 
         - Key: Name
-          Value: labstack-nacl-denyall
+          Value: !Sub "${AWS::StackName}-nacl-denyall"
 
   naclEntryDenyAllEgress:
     Type: AWS::EC2::NetworkAclEntry
@@ -459,7 +431,7 @@ Resources:
   roleEnhancedMonitoring:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub labstack-monitor-${AWS::Region}
+      RoleName: !Sub ${AWS::StackName}-monitor-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -476,7 +448,7 @@ Resources:
   roleServiceIntegration:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub labstack-integrate-${AWS::Region}
+      RoleName: !Sub ${AWS::StackName}-integrate-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -508,7 +480,7 @@ Resources:
   roleBastionHost:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub labstack-bastion-${AWS::Region}
+      RoleName: !Sub ${AWS::StackName}-bastion-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -542,7 +514,7 @@ Resources:
       Roles:
         - Ref: roleBastionHost
 
-## Create the Apache Superset host
+## Create the Apache Superset host (Amazon Linux 2)
   supersetHost:
     Type: 'AWS::EC2::Instance'
     Properties:
@@ -551,7 +523,7 @@ Resources:
       SecurityGroupIds: [ !Ref supersetSecGroup ]
       Tags:
         - Key: Name
-          Value: labstack-superset-host
+          Value: !Sub "${AWS::StackName}-superset-host"
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -600,7 +572,7 @@ Resources:
       SecurityGroupIds: [ !Ref bastionSecGroup ]
       Tags:
         - Key: Name
-          Value: labstack-bastion-host
+          Value: !Sub "${AWS::StackName}-bastion-host"
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -668,14 +640,6 @@ Resources:
           chown -R ubuntu:ubuntu /home/ubuntu/.aws/config
           echo "* configured aws cli" >> /debug.log
 
-          # set DB cluster user and password as env variables
-          export SECRETSTRING=`aws secretsmanager get-secret-value --secret-id ${secretClusterMasterUser} --region ${AWS::Region} | jq -r '.SecretString'`
-          export DBPASS=`echo $SECRETSTRING | jq -r '.password'`
-          export DBUSER=`echo $SECRETSTRING | jq -r '.username'`
-          echo "export DBPASS=\"$DBPASS\"" >> /home/ubuntu/.bashrc
-          echo "export DBUSER=$DBUSER" >> /home/ubuntu/.bashrc
-          echo "* db credentials initialized" >> /debug.log
-
           # reboot
           echo "* bootstrap complete, rebooting" >> /debug.log
           shutdown -r now
@@ -684,7 +648,7 @@ Resources:
   pgNodeParams:
     Type: AWS::RDS::DBParameterGroup
     Properties:
-      Description: labstack-node-params
+      Description: !Sub ${AWS::StackName}-node-params
       Family: aurora5.6
       Parameters:
         innodb_stats_persistent_sample_pages: "256"
@@ -693,178 +657,41 @@ Resources:
         log_output: FILE
       Tags:
         - Key: Name
-          Value: labstack-node-params
+          Value: !Sub ${AWS::StackName}-node-params
 
 ## Create cluster parameter group
   cpgClusterParams:
     Type: AWS::RDS::DBClusterParameterGroup
     Properties:
-      Description: labstack-cluster-params
+      Description: !Sub ${AWS::StackName}-cluster-params
       Family: aurora5.6
       Parameters:
         aws_default_s3_role: !GetAtt roleServiceIntegration.Arn
       Tags:
         - Key: Name
-          Value: labstack-cluster-params
-
-## Create a random generated password and store it as a secret
-  secretClusterMasterUser:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Description: "Master user credentials for labstack-cluster"
-      GenerateSecretString:
-        SecretStringTemplate: '{"username": "masteruser"}'
-        GenerateStringKey: 'password'
-        PasswordLength: 10
-        ExcludeCharacters: '"@/\$`&,.<>'
-      Tags:
-        - Key: Name
-          Value: labstack-secret
-
-## Create Aurora cluster
-  dbCluster:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      Engine: aurora
-      EngineMode: global
-      EngineVersion: 5.6.10a
-      DBSubnetGroupName: !Ref dbSubnets
-      DBClusterParameterGroupName: !Ref cpgClusterParams
-      DBClusterIdentifier: gdb-reg1-cluster
-      BackupRetentionPeriod: 7
-      MasterUsername: 'masteruser'
-      MasterUserPassword: 'mysqlpw321'
-      DatabaseName: !FindInMap [ ClusterSettings, global, dbSchema ]
-      StorageEncrypted: true
-      VpcSecurityGroupIds: [ !Ref dbSecGroupCluster ]
-      EnableCloudwatchLogsExports: [ error, slowquery ]
-      EnableIAMDatabaseAuthentication: true
-      AssociatedRoles:
-        - RoleArn: !GetAtt roleServiceIntegration.Arn
-      Tags:
-        - Key: Name
-          Value: labstack-reg1-cluster
-
-## Deploy the first cluster node (always the writer)
-  dbNodeWriter:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      DBClusterIdentifier: !Ref dbCluster
-      DBInstanceIdentifier: gdb-reg1-node1
-      CopyTagsToSnapshot: true
-      DBInstanceClass: !FindInMap [ RegionalSettings, !Ref "AWS::Region", nodeType ]
-      DBParameterGroupName: !Ref pgNodeParams
-      Engine: aurora
-      MonitoringInterval: 1
-      MonitoringRoleArn: !GetAtt roleEnhancedMonitoring.Arn
-      PubliclyAccessible: false
-      EnablePerformanceInsights: true
-      PerformanceInsightsRetentionPeriod: 7
-      Tags:
-        - Key: Name
-          Value: labstack-reg1-node1
-
-
-## Create sysbench prep SSM document
-  ssmDocSysbenchTest:
-    Type: AWS::SSM::Document
-    Properties:
-      DocumentType: Command
-      Tags:
-        - Key: Name
-          Value: labstack-sysbench-test
-      Content:
-        schemaVersion: '2.2'
-        description: SysBench Percona TPCC-LIKE Preparation
-        parameters:
-          clusterEndpoint:
-            type: String
-            description: Aurora Cluster Endpoint
-            default: !GetAtt dbCluster.Endpoint.Address
-          dbUser:
-            type: String
-            description: DB User
-            default: !Join ['', ['{{resolve:secretsmanager:', !Ref secretClusterMasterUser, ':SecretString:username}}' ]]
-          dbPassword:
-            type: String
-            description: DB Password
-            default: !Join ['', ['{{resolve:secretsmanager:', !Ref secretClusterMasterUser, ':SecretString:password}}' ]]
-          dbSchema:
-            type: String
-            description: DB Schema
-            default: !FindInMap [ ClusterSettings, sysbench, dbSchema ]
-          dbDriver:
-            type: String
-            description: DB Driver
-            default: !FindInMap [ ClusterSettings, global, dbDriver ]
-            allowedValues: [ mysql, pgsql ]
-          runTime:
-            type: String
-            description: Test Runtime
-            default: !FindInMap [ ClusterSettings, sysbench, runTime ]
-          numThreads:
-            type: String
-            description: Threads
-            default: !FindInMap [ ClusterSettings, sysbench, numThreads ]
-          numTables:
-            type: String
-            description: Tables
-            default: !FindInMap [ ClusterSettings, sysbench, numTables ]
-          numScale:
-            type: String
-            description: Scale
-            default: !FindInMap [ ClusterSettings, sysbench, numWarehouses ]
-        mainSteps:
-        - action: aws:runShellScript
-          name: SysBenchTpccPrepare
-          inputs:
-            runCommand:
-            - 'echo "DROP SCHEMA IF EXISTS {{ dbSchema }}; CREATE SCHEMA {{ dbSchema }};" | mysql -h{{ clusterEndpoint }} -u{{ dbUser }} -p"{{ dbPassword }}" && cd /home/ubuntu/sysbench-tpcc && ./tpcc.lua --mysql-host={{ clusterEndpoint }} --mysql-user={{ dbUser }} --mysql-password="{{ dbPassword }}" --mysql-db={{ dbSchema }} --threads={{ numThreads }} --tables={{ numTables }} --scale={{ numScale }} --time={{ runTime }} --db-driver={{ dbDriver }} prepare'
-        - action: aws:runShellScript
-          name: SysBenchTpccRun
-          inputs:
-            runCommand:
-            - 'cd /home/ubuntu/sysbench-tpcc && ./tpcc.lua --mysql-host={{ clusterEndpoint }} --mysql-user={{ dbUser }} --mysql-password="{{ dbPassword }}" --mysql-db={{ dbSchema }} --threads={{ numThreads }} --tables={{ numTables }} --scale={{ numScale }} --time={{ runTime }} --db-driver={{ dbDriver }} run'
-
+          Value: !Sub ${AWS::StackName}-cluster-params
 
 ## Outputs
 Outputs:
   vpcId:
-    Description: Region1 Aurora Lab VPC
+    Description: Region2 Aurora Lab VPC
     Value: !Ref vpc
   bastionInstanceID:
-    Description: Region1 Bastion Instance ID
+    Description: Region2 Bastion Instance ID
     Value: !Ref bastionHost
   supersetInstanceID:
-    Description: Region1 Apache Superset Instance ID
-    Value: !Ref supersetHost
+    Description: Region2 Apache Superset Instance ID
+    Value: !Ref supersetHost 
   bastionPublicDNSName:
-    Description: Region1 Bastion Public DNS Name
+    Description: Region2 Bastion Public DNS Name
     Value: !GetAtt bastionHost.PublicDnsName
   supersetPublicDNSName:
-    Description: Region1 Apache Superset Public DNS Name
+    Description: Region2 Apache Superset Public DNS Name
     Value: !GetAtt supersetHost.PublicDnsName
-  clusterName:
-    Description: Region1 Aurora Regional Cluster Name
-    Value: !Ref dbCluster
-  clusterEndpoint:
-    Description: Region1 Aurora Regional Cluster Writer Endpoint
-    Value: !GetAtt dbCluster.Endpoint.Address
-  clusterMasterUser:
-    Description: Aurora Master Username
-    Value: !Join ['', ['{{resolve:secretsmanager:', !Ref secretClusterMasterUser, ':SecretString:username}}' ]]
-  clusterMasterPassword:
-    Description: Aurora Master Password
-    Value: !Join ['', ['{{resolve:secretsmanager:', !Ref secretClusterMasterUser, ':SecretString:password}}' ]]
-  loadTestRunDoc:
-    Description: Region1 Load Test Execution Command Document
-    Value: !Ref ssmDocSysbenchTest
   dbSubnetGroup:
-    Description: Region1 Database Subnet Group
+    Description: Region2 Database Subnet Group
     Value: !Ref dbSubnets
   dbSecurityGroup:
-    Description: Region1 Database Security Group
+    Description: Region2 Database Security Group
     Value: !Ref dbSecGroupCluster
-  secretArn:
-    Description: Region1 Database Credentials Secret ARN
-    Value: !Ref secretClusterMasterUser
+

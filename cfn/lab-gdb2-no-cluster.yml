@@ -678,6 +678,9 @@ Outputs:
   supersetInstanceID:
     Description: Region2 Apache Superset Instance ID
     Value: !Ref supersetHost
+  supersetURL:
+    Description: Region1 Apache Superset URL Access
+    Value: !Join [ [ !GetAtt supersetHost.PublicDnsName ], ':8088']    
   bastionPublicDNSName:
     Description: Region2 Bastion Public DNS Name
     Value: !GetAtt bastionHost.PublicDnsName

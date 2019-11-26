@@ -58,12 +58,10 @@ Those who have been familiar with AWS for a while may remember that connecting t
        nohup gunicorn -b 0.0.0.0:8088 --limit-request-line 0 --limit-request-field_size 0 superset:app &
        ```
 
-    1. The application will take a minute or two to build samples and initialize. Once you see the message similar to those below, Superset is running, with the service running by a web server on TCP port 8088. Press enter after the last command output to return to the terminal.
+    1. The application will take a minute or two to build samples and initialize. Remember to press ENTER to submit the last command. Once you see the message similar to that below, Superset is running, with the service running by a web server ``gunicorn`` on TCP port 8088. Press ENTER again after the below output to return to the terminal.
 
        ```
-       [2019-xx-xx 00:00:00 +0000] [11827] [INFO] Listening at: http://0.0.0.0:8088 (11827)
-       [2019-xx-xx 00:00:00 +0000] [11827] [INFO] Using worker: sync
-       [2019-xx-xx 00:00:00 +0000] [11831] [INFO] Booting worker with pid: 11831
+       nohup: ignoring input and appending output to ‘/home/ssm-user/nohup.out’
        ```
 
 1. Return to your AWS Management Console. Use the Service menu and click on **CloudFormation** or simply type **CloudFormation** into the search bar.
@@ -152,12 +150,10 @@ Those who have been familiar with AWS for a while may remember that connecting t
        nohup gunicorn -b 0.0.0.0:8088 --limit-request-line 0 --limit-request-field_size 0 superset:app &
        ```
 
-    1. The application will take a minute or two to build samples and initialize. Once you see the message similar to those below, Superset is running, with the service running by a web server on TCP port 8088. Press enter after the last command output to return to the terminal.
+    1. The application will take a minute or two to build samples and initialize. Remember to press ENTER to submit the last command. Once you see the message similar to that below, Superset is running, with the service running by a web server ``gunicorn`` on TCP port 8088. Press ENTER again after the below output to return to the terminal.
 
        ```
-       [2019-xx-xx 00:00:00 +0000] [11827] [INFO] Listening at: http://0.0.0.0:8088 (11827)
-       [2019-xx-xx 00:00:00 +0000] [11827] [INFO] Using worker: sync
-       [2019-xx-xx 00:00:00 +0000] [11831] [INFO] Booting worker with pid: 11831
+       nohup: ignoring input and appending output to ‘/home/ssm-user/nohup.out’
        ```
 
 1. Return to your AWS Management Console. Use the Service menu and click on **CloudFormation** or simply type **CloudFormation** into the search bar.
