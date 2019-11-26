@@ -189,9 +189,9 @@ Those who have been familiar with AWS for a while may remember that connecting t
       ----- | -----
       Database | <pre>aurora-gdb2-read</pre> <br> This will be the friendly name of our Aurora Database in Superset<br>&nbsp;
       SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region2GDBReadEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region2clusterEndpoint in the output of your CloudFormation template. Click on **Test Connection** to confirm.<br>&nbsp;
-      Expose in SQL Lab | :x:
-      Allow CREATE TABLE AS | :x:
-      Allow DML | :x:
+      Expose in SQL Lab | :black_square_button:
+      Allow CREATE TABLE AS | :black_square_button:
+      Allow DML | :black_square_button:
 
       ![Superset GDB2 Read Settings](superset-gdb2r.png)
    
