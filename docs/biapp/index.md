@@ -16,7 +16,7 @@ Those who have been familiar with AWS for a while may remember that connecting t
 #
 
 <details>
-<summary>Primary Region - Application Instance Setup</summary>
+<summary>Primary Region - Application Instance Setup (Click to expand)</summary>
 
 >  **`Region 1 (Primary)`** 
 
@@ -108,7 +108,7 @@ Those who have been familiar with AWS for a while may remember that connecting t
 # 
 
 <details>
-<summary>Secondary Region - Application Instance Setup</summary>
+<summary>Secondary Region - Application Instance Setup (Click to expand)</summary>
 
 >  **`Region 2 (Secondary)`** 
 
@@ -189,9 +189,9 @@ Those who have been familiar with AWS for a while may remember that connecting t
       ----- | -----
       Database | <pre>aurora-gdb2-read</pre> <br> This will be the friendly name of our Aurora Database in Superset<br>&nbsp;
       SQLAlchemy URI | <pre>mysql://masteruser:mysqlpw321@<b><i>!region2GDBReadEndpoint</i></b>/mysql</pre> <br> Replace the endpoint with the !region2clusterEndpoint in the output of your CloudFormation template. Click on **Test Connection** to confirm.<br>&nbsp;
-      Expose in SQL Lab | :ballot_box_with_check:
-      Allow CREATE TABLE AS | :ballot_box_with_check:
-      Allow DML | :ballot_box_with_check:
+      Expose in SQL Lab | :x:
+      Allow CREATE TABLE AS | :x:
+      Allow DML | :x:
 
       ![Superset GDB2 Read Settings](superset-gdb2r.png)
    
@@ -218,7 +218,7 @@ At this point, you should have the 2 BI application instances, launched in 2 dis
 #
 
 <details>
-<summary>Aurora Global Database in Action</summary>
+<summary>Aurora Global Database in Action (Click to expand)</summary>
 
 >  **`Region 1 (Primary)`** 
 
