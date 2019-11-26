@@ -28,6 +28,9 @@ Description: Amazon Aurora Labs for MySQL - Global Database Workshop (reInvent D
 
 ## Parameters
 Parameters:
+  vpcAZs:
+    Type: "List<AWS::EC2::AvailabilityZone::Name>"
+    Description: List of Availability Zones to use for the subnets in the VPC. Must pick 3 AZs in regions with 3 or more AZs.
   amiIdLatestAmzn2:
     # Use public Systems Manager Parameter to retrieve latest Amazon Linux 2 AMI IDs
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
@@ -43,77 +46,78 @@ Mappings:
     us-east-1:
       bastionAmi: ami-024582e76075564db
       bastionType: m4.large
-      biappType: m5.large
       nodeType: db.r5.large
-      name: N. Virginia
-      azs: "3"    
+      name: Ohio
+      azs: "3"
     us-east-2:
       bastionAmi: ami-090a9429be63ca087
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
-      name: Ohio
-      azs: "3"   
+      name: N. Virginia
+      azs: "3"
+    us-west-1:
+      bastionAmi: ami-0c6eca62e6c7dacff
+      bastionType: m4.large
+      nodeType: db.r5.large
+      name: N. California
+      azs: "2"
     us-west-2:
       bastionAmi: ami-09c08e9cd8d9c1b93
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
       name: Oregon
-      azs: "3"      
+      azs: "3"
     eu-central-1:
       bastionAmi: ami-0fd6d676e2e90dc7b
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
       name: Frankfurt
-      azs: "3" 
+      azs: "3"
     eu-west-1:
       bastionAmi: ami-08f053fa3d25478f4
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
       name: Ireland
-      azs: "3"      
+      azs: "3"
     eu-west-2:
       bastionAmi: ami-012d95ddd53c98e0e
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
       name: London
-      azs: "3"       
+      azs: "3"
     eu-west-3:
       bastionAmi: ami-0001c7938b8e89312
-      bastionType: m5.large
-      biappType: m5.large      
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Paris
-      azs: "3"     
+      azs: "3"
     ap-southeast-1:
       bastionAmi: ami-0f8c65cdcc35d0a72
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
       name: Singapore
-      azs: "3"         
+      azs: "3"
     ap-southeast-2:
       bastionAmi: ami-056280928f86f80a8
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
       name: Sydney
-      azs: "3"       
+      azs: "3"
+    ap-south-1:
+      bastionAmi: ami-03d48fdf7c142da15
+      bastionType: m4.large
+      nodeType: db.r5.large
+      name: Mumbai
+      azs: "3"
     ap-northeast-1:
       bastionAmi: ami-0193f3ddafc2d8921
       bastionType: m4.large
-      biappType: m5.large      
       nodeType: db.r5.large
       name: Tokyo
-      azs: "3"       
+      azs: "3"
     ap-northeast-2:
       bastionAmi: ami-0b0d9551c4775f4e4
-      bastionType: m5.large
-      biappType: m5.large      
+      bastionType: m4.large
       nodeType: db.r5.large
       name: Seoul
       azs: "3"
@@ -157,7 +161,7 @@ Resources:
       CidrBlock: !FindInMap [ NetworkSettings, global, vpcCidr ]
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-vpc"
+          Value: labstack-vpc
 
 ## Create an IGW & attach it to the VPC
   vpcIgw:
@@ -165,7 +169,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-igw"
+          Value: labstack-igw
   attachIgwVpc:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -178,37 +182,32 @@ Resources:
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPub1Cidr ]
-      AvailabilityZone: !Select 
-        - 0
-        - Fn::GetAZs: !Ref 'AWS::Region'
+      AvailabilityZone: !Select [0, !Ref vpcAZs ]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-pub-sub-1"
+          Value: labstack-pub-sub-1
   sub2Public:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPub2Cidr ]
-      AvailabilityZone: !Select 
-        - 1
-        - Fn::GetAZs: !Ref 'AWS::Region'
+      AvailabilityZone: !Select [1, !Ref vpcAZs ]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-pub-sub-2"
+          Value: labstack-pub-sub-2
   sub3Public:
     Type: AWS::EC2::Subnet
+    Condition: cond3AZs
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPub3Cidr ]
-      AvailabilityZone: !Select 
-        - 2
-        - Fn::GetAZs: !Ref 'AWS::Region'
+      AvailabilityZone: !Select [2, !Ref vpcAZs ]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-pub-sub-3"
+          Value: labstack-pub-sub-3
 
 ## Associate the public subnets with a public route table
   rtbPublic:
@@ -217,7 +216,7 @@ Resources:
       VpcId: !Ref vpc
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-public-rtb"
+          Value: labstack-public-rtb
   rteToIgw:
     Type: AWS::EC2::Route
     DependsOn: attachIgwVpc
@@ -237,6 +236,7 @@ Resources:
       RouteTableId: !Ref rtbPublic
   srta3Public:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: cond3AZs
     Properties:
       SubnetId: !Ref sub3Public
       RouteTableId: !Ref rtbPublic
@@ -247,37 +247,32 @@ Resources:
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPrv1Cidr ]
-      AvailabilityZone: !Select 
-        - 0
-        - Fn::GetAZs: !Ref 'AWS::Region'
+      AvailabilityZone: !Select [0, !Ref vpcAZs ]
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-prv-sub-1"
+          Value: labstack-prv-sub-1
   sub2Private:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPrv2Cidr ]
-      AvailabilityZone: !Select 
-        - 1
-        - Fn::GetAZs: !Ref 'AWS::Region'
+      AvailabilityZone: !Select [1, !Ref vpcAZs ]
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-prv-sub-2"
+          Value: labstack-prv-sub-2
   sub3Private:
     Type: AWS::EC2::Subnet
+    Condition: cond3AZs
     Properties:
       VpcId: !Ref vpc
       CidrBlock: !FindInMap [ NetworkSettings, global, subPrv3Cidr ]
-      AvailabilityZone: !Select 
-        - 2
-        - Fn::GetAZs: !Ref 'AWS::Region'
+      AvailabilityZone: !Select [2, !Ref vpcAZs ]
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-prv-sub-3"
+          Value: labstack-prv-sub-3
 
 ## Create a NAT Gateway & EIP
   natEip:
@@ -298,7 +293,7 @@ Resources:
       VpcId: !Ref vpc
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-nat-rtb"
+          Value: labstack-nat-rtb
   rteToNgw:
     Type: AWS::EC2::Route
     Properties:
@@ -317,6 +312,7 @@ Resources:
       RouteTableId: !Ref rtbNat
   srta3Ngw:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: cond3AZs
     Properties:
       SubnetId: !Ref sub3Private
       RouteTableId: !Ref rtbNat
@@ -342,33 +338,33 @@ Resources:
   dbSubnets:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: !Sub ${AWS::StackName}-db-subnet-group
-      SubnetIds: [ !Ref sub1Private, !Ref sub2Private, !Ref sub3Private ]
+      DBSubnetGroupDescription: labstack-db-subnet-group
+      SubnetIds: [ !Ref sub1Private, !Ref sub2Private, !If [ cond3AZs, !Ref sub3Private, !Ref "AWS::NoValue" ] ]
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-db-subnet-group"
+          Value: labstack-db-subnet-group
 
 ## Create bastion security group
   bastionSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref vpc
-      GroupName: !Sub ${AWS::StackName}-bastion-host
+      GroupName: labstack-bastion-host
       GroupDescription: Aurora Lab SSH Security Group
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-bastion-host"
+          Value: labstack-bastion-host
 
 ## Create Apache Superset security group
   supersetSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref vpc
-      GroupName: !Sub ${AWS::StackName}-superset-host
+      GroupName: labstack-superset-host
       GroupDescription: Aurora Lab Apache Superset Security Group
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-superset-host"
+          Value: labstack-superset-host
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8088
@@ -381,11 +377,11 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref vpc
-      GroupName: !Sub ${AWS::StackName}-mysql-internal
+      GroupName: labstack-mysql-internal
       GroupDescription: Aurora Lab Database Firewall
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-mysql-internal"
+          Value: labstack-mysql-internal
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
@@ -405,7 +401,7 @@ Resources:
       VpcId: !Ref vpc
       Tags: 
         - Key: Name
-          Value: !Sub "${AWS::StackName}-nacl-denyall"
+          Value: labstack-nacl-denyall
 
   naclEntryDenyAllEgress:
     Type: AWS::EC2::NetworkAclEntry
@@ -431,7 +427,7 @@ Resources:
   roleEnhancedMonitoring:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${AWS::StackName}-monitor-${AWS::Region}
+      RoleName: !Sub labstack-monitor-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -448,7 +444,7 @@ Resources:
   roleServiceIntegration:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${AWS::StackName}-integrate-${AWS::Region}
+      RoleName: !Sub labstack-integrate-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -480,7 +476,7 @@ Resources:
   roleBastionHost:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${AWS::StackName}-bastion-${AWS::Region}
+      RoleName: !Sub labstack-bastion-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -519,11 +515,11 @@ Resources:
     Type: 'AWS::EC2::Instance'
     Properties:
       SubnetId: !Ref sub2Public
-      InstanceType: !FindInMap [ RegionalSettings, !Ref "AWS::Region", biappType ]
+      InstanceType: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionType ]
       SecurityGroupIds: [ !Ref supersetSecGroup ]
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-superset-host"
+          Value: labstack-superset-host
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -572,7 +568,7 @@ Resources:
       SecurityGroupIds: [ !Ref bastionSecGroup ]
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName}-bastion-host"
+          Value: labstack-bastion-host
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -648,7 +644,7 @@ Resources:
   pgNodeParams:
     Type: AWS::RDS::DBParameterGroup
     Properties:
-      Description: !Sub ${AWS::StackName}-node-params
+      Description: labstack-node-params
       Family: aurora5.6
       Parameters:
         innodb_stats_persistent_sample_pages: "256"
@@ -657,19 +653,19 @@ Resources:
         log_output: FILE
       Tags:
         - Key: Name
-          Value: !Sub ${AWS::StackName}-node-params
+          Value: labstack-node-params
 
 ## Create cluster parameter group
   cpgClusterParams:
     Type: AWS::RDS::DBClusterParameterGroup
     Properties:
-      Description: !Sub ${AWS::StackName}-cluster-params
+      Description: labstack-cluster-params
       Family: aurora5.6
       Parameters:
         aws_default_s3_role: !GetAtt roleServiceIntegration.Arn
       Tags:
         - Key: Name
-          Value: !Sub ${AWS::StackName}-cluster-params
+          Value: labstack-cluster-params
 
 ## Outputs
 Outputs:
@@ -681,7 +677,10 @@ Outputs:
     Value: !Ref bastionHost
   supersetInstanceID:
     Description: Region2 Apache Superset Instance ID
-    Value: !Ref supersetHost 
+    Value: !Ref supersetHost
+  supersetURL:
+    Description: Region1 Apache Superset URL Access
+    Value: !Join [ [ !GetAtt supersetHost.PublicDnsName ], ':8088']    
   bastionPublicDNSName:
     Description: Region2 Bastion Public DNS Name
     Value: !GetAtt bastionHost.PublicDnsName
