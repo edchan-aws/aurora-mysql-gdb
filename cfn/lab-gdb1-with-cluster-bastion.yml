@@ -13,10 +13,10 @@
 ## 2019-09-19 - Fixed resource names to enable EE
 ## 2019-09-23 - Removed custom Lambda resource, using native role assignment
 ## 2019-09-23 - Removed !Sub references on static names to pass linter
-## 2019-10-01 - edchan@ Forked for Global Database Infrastructure
+## 2019-10-01 - Forked for Global Database Infrastructure
 ## 2019-10-18 - Updates to Allowed Regions (Global database Availability)
 ## 2019-11-10 - Added Apache Superset EC2 launch
-## 2019-11-26 - Split GDB Region 1 Ready Release; removed bastion
+## 2019-11-26 - Split GDB Region 1 Ready Release
 ##
 ## Dependencies:
 ## none
@@ -578,6 +578,95 @@ Resources:
           echo "* bootstrap complete, rebooting" >> /debug.log
           shutdown -r now
 
+## Create the bastion host
+  bastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !Ref sub1Public
+      InstanceType: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionType ]
+      SecurityGroupIds: [ !Ref bastionSecGroup ]
+      Tags:
+        - Key: Name
+          Value: !Sub "${gdbPrefix}-bastion-host"
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            DeleteOnTermination: true
+            Iops: 7500
+            VolumeSize: 150
+            VolumeType: io1
+      ImageId: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionAmi ]
+      IamInstanceProfile: !Ref profileBastionHost
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+
+          # update & upgrade packages
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
+          echo "* updated and upgraded packages" >> /debug.log
+
+          # update SSM agent
+          snap remove amazon-ssm-agent
+          wget https://s3.us-east-2.amazonaws.com/amazon-ssm-us-east-2/latest/debian_amd64/amazon-ssm-agent.deb
+          DEBIAN_FRONTEND=noninteractive dpkg -i amazon-ssm-agent.deb
+          echo "* update ssm-agent to latest" >> /debug.log
+
+          # install jq
+          apt-get -y install jq
+          echo "* installed jq package" >> /debug.log
+
+          # install mysql client tools
+          apt-get -y install mysql-client
+          mysql --version >> /debug.log
+          echo "* installed mysql-client package" >> /debug.log
+
+          # install sysbench
+          curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.deb.sh | sudo bash
+          apt-get update
+          apt-get -y install sysbench
+          sysbench --version >> /debug.log
+          echo "* installed sysbench package" >> /debug.log
+
+          # install percona tpcc-like test suite
+          git clone https://github.com/Percona-Lab/sysbench-tpcc.git /home/ubuntu/sysbench-tpcc
+          chown -R ubuntu:ubuntu /home/ubuntu/sysbench-tpcc
+          echo "* cloned percona/sysbench-tpcc repo" >> /debug.log
+
+          # download demo databases
+          git clone https://github.com/datacharmer/test_db.git /home/ubuntu/samples
+          chown -R ubuntu:ubuntu /home/ubuntu/samples
+          echo "* cloned test databases repo" >> /debug.log
+
+          # install python pip and aws cli
+          apt-get -y install python3-pip
+          pip3 install pymysql
+          pip3 install awscli
+          cd /home/ubuntu
+          curl -O https://awsauroralabsmysql.com/scripts/loadtest.py
+          chown -R ubuntu:ubuntu /home/ubuntu/loadtest.py
+          echo "* pulled load test script" >> /debug.log
+
+          # configure AWS CLI
+          mkdir /home/ubuntu/.aws
+          touch /home/ubuntu/.aws/config
+          echo "[default]" >> /home/ubuntu/.aws/config
+          echo "region = ${AWS::Region}" >> /home/ubuntu/.aws/config
+          chown -R ubuntu:ubuntu /home/ubuntu/.aws/config
+          echo "* configured aws cli" >> /debug.log
+
+          # set DB cluster user and password as env variables
+          export SECRETSTRING=`aws secretsmanager get-secret-value --secret-id ${secretClusterMasterUser} --region ${AWS::Region} | jq -r '.SecretString'`
+          export DBPASS=`echo $SECRETSTRING | jq -r '.password'`
+          export DBUSER=`echo $SECRETSTRING | jq -r '.username'`
+          echo "export DBPASS=\"$DBPASS\"" >> /home/ubuntu/.bashrc
+          echo "export DBUSER=$DBUSER" >> /home/ubuntu/.bashrc
+          echo "* db credentials initialized" >> /debug.log
+
+          # reboot
+          echo "* bootstrap complete, rebooting" >> /debug.log
+          shutdown -r now
+
 ## Create parameter groups for cluster nodes
   pgNodeParams:
     Type: AWS::RDS::DBParameterGroup
@@ -730,9 +819,15 @@ Outputs:
   vpcId:
     Description: Region1 Aurora Lab VPC
     Value: !Ref vpc
+  bastionInstanceID:
+    Description: Region1 Bastion Instance ID
+    Value: !Ref bastionHost
   supersetInstanceID:
     Description: Region1 Apache Superset Instance ID
     Value: !Ref supersetHost
+  bastionPublicDNSName:
+    Description: Region1 Bastion Public DNS Name
+    Value: !GetAtt bastionHost.PublicDnsName
   supersetPublicDNSName:
     Description: Region1 Apache Superset Public DNS Name
     Value: !GetAtt supersetHost.PublicDnsName
