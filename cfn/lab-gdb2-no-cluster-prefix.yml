@@ -1,5 +1,5 @@
 ---
-## Amazon Aurora Labs for MySQL - Global Database Region 1
+## Amazon Aurora Labs for MySQL - Global Database Region 2
 ## Infrastructure template with an Aurora cluster for lab exercises
 ##
 ## Changelog:
@@ -13,10 +13,10 @@
 ## 2019-09-19 - Fixed resource names to enable EE
 ## 2019-09-23 - Removed custom Lambda resource, using native role assignment
 ## 2019-09-23 - Removed !Sub references on static names to pass linter
-## 2019-10-01 - Forked for Global Database Infrastructure
+## 2019-10-01 - edchan@ Forked for Global Database Infrastructure
 ## 2019-10-18 - Updates to Allowed Regions (Global database Availability)
 ## 2019-11-10 - Added Apache Superset EC2 launch
-## 2019-11-26 - Split GDB Region 1 Ready Release
+## 2019-11-26 - Split GDB Region 2 Ready Release; removed bastion
 ##
 ## Dependencies:
 ## none
@@ -25,21 +25,14 @@
 ## This sample code is made available under the MIT-0 license. See the LICENSE file.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Amazon Aurora Labs for MySQL - Global Database Workshop (Region1)
+Description: Amazon Aurora Labs for MySQL - Global Database Workshop (Region2)
 
 ## Parameters
 Parameters:
   gdbPrefix:
     Description: Default prefix for all resources in template
     Type: String
-    Default: 'gdb1'
-  dbMasterPassword:
-    Description: The Aurora global database masteruser (admin) account password
-    Type: String
-    MinLength: 8
-    MaxLength: 40
-    AllowedPattern: ^[a-zA-Z0-9]*$
-    Default: 'auroragdb321'
+    Default: 'gdb2'
   amiIdLatestAmzn2:
     # Use public Systems Manager Parameter to retrieve latest Amazon Linux 2 AMI IDs
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
@@ -131,14 +124,14 @@ Mappings:
       azs: "3"
   NetworkSettings:
     global:
-      # Region 1 CIDR on 172.31.0.0/16 in the event peering is required
-      vpcCidr: 172.31.0.0/16
-      subPub1Cidr: 172.31.0.0/24
-      subPub2Cidr: 172.31.1.0/24
-      subPub3Cidr: 172.31.2.0/24
-      subPrv1Cidr: 172.31.10.0/24
-      subPrv2Cidr: 172.31.11.0/24
-      subPrv3Cidr: 172.31.12.0/24
+      # Region 2 CIDR on 172.32.0.0/16 in the event peering is required
+      vpcCidr: 172.32.0.0/16
+      subPub1Cidr: 172.32.0.0/24
+      subPub2Cidr: 172.32.1.0/24
+      subPub3Cidr: 172.32.2.0/24
+      subPrv1Cidr: 172.32.10.0/24
+      subPrv2Cidr: 172.32.11.0/24
+      subPrv3Cidr: 172.32.12.0/24
       sshSourceCidr: 0.0.0.0/0
   ClusterSettings:
     global:
@@ -249,7 +242,6 @@ Resources:
       RouteTableId: !Ref rtbPublic
   srta3Public:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: cond3AZs
     Properties:
       SubnetId: !Ref sub3Public
       RouteTableId: !Ref rtbPublic
@@ -292,7 +284,6 @@ Resources:
         - Key: Name
           Value: !Sub "${gdbPrefix}-prv-sub-3"
 
-
 ## Create a NAT Gateway & EIP
   natEip:
     Type: AWS::EC2::EIP
@@ -331,7 +322,6 @@ Resources:
       RouteTableId: !Ref rtbNat
   srta3Ngw:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: cond3AZs
     Properties:
       SubnetId: !Ref sub3Private
       RouteTableId: !Ref rtbNat
@@ -529,7 +519,7 @@ Resources:
       Roles:
         - Ref: roleBastionHost
 
-## Create the Apache Superset host
+## Create the Apache Superset host (Amazon Linux 2)
   supersetHost:
     Type: 'AWS::EC2::Instance'
     Properties:
@@ -578,95 +568,6 @@ Resources:
           echo "* bootstrap complete, rebooting" >> /debug.log
           shutdown -r now
 
-## Create the bastion host
-  bastionHost:
-    Type: AWS::EC2::Instance
-    Properties:
-      SubnetId: !Ref sub1Public
-      InstanceType: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionType ]
-      SecurityGroupIds: [ !Ref bastionSecGroup ]
-      Tags:
-        - Key: Name
-          Value: !Sub "${gdbPrefix}-bastion-host"
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            DeleteOnTermination: true
-            Iops: 7500
-            VolumeSize: 150
-            VolumeType: io1
-      ImageId: !FindInMap [ RegionalSettings, !Ref "AWS::Region", bastionAmi ]
-      IamInstanceProfile: !Ref profileBastionHost
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash -xe
-
-          # update & upgrade packages
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-          echo "* updated and upgraded packages" >> /debug.log
-
-          # update SSM agent
-          snap remove amazon-ssm-agent
-          wget https://s3.us-east-2.amazonaws.com/amazon-ssm-us-east-2/latest/debian_amd64/amazon-ssm-agent.deb
-          DEBIAN_FRONTEND=noninteractive dpkg -i amazon-ssm-agent.deb
-          echo "* update ssm-agent to latest" >> /debug.log
-
-          # install jq
-          apt-get -y install jq
-          echo "* installed jq package" >> /debug.log
-
-          # install mysql client tools
-          apt-get -y install mysql-client
-          mysql --version >> /debug.log
-          echo "* installed mysql-client package" >> /debug.log
-
-          # install sysbench
-          curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.deb.sh | sudo bash
-          apt-get update
-          apt-get -y install sysbench
-          sysbench --version >> /debug.log
-          echo "* installed sysbench package" >> /debug.log
-
-          # install percona tpcc-like test suite
-          git clone https://github.com/Percona-Lab/sysbench-tpcc.git /home/ubuntu/sysbench-tpcc
-          chown -R ubuntu:ubuntu /home/ubuntu/sysbench-tpcc
-          echo "* cloned percona/sysbench-tpcc repo" >> /debug.log
-
-          # download demo databases
-          git clone https://github.com/datacharmer/test_db.git /home/ubuntu/samples
-          chown -R ubuntu:ubuntu /home/ubuntu/samples
-          echo "* cloned test databases repo" >> /debug.log
-
-          # install python pip and aws cli
-          apt-get -y install python3-pip
-          pip3 install pymysql
-          pip3 install awscli
-          cd /home/ubuntu
-          curl -O https://awsauroralabsmysql.com/scripts/loadtest.py
-          chown -R ubuntu:ubuntu /home/ubuntu/loadtest.py
-          echo "* pulled load test script" >> /debug.log
-
-          # configure AWS CLI
-          mkdir /home/ubuntu/.aws
-          touch /home/ubuntu/.aws/config
-          echo "[default]" >> /home/ubuntu/.aws/config
-          echo "region = ${AWS::Region}" >> /home/ubuntu/.aws/config
-          chown -R ubuntu:ubuntu /home/ubuntu/.aws/config
-          echo "* configured aws cli" >> /debug.log
-
-          # set DB cluster user and password as env variables
-          export SECRETSTRING=`aws secretsmanager get-secret-value --secret-id ${secretClusterMasterUser} --region ${AWS::Region} | jq -r '.SecretString'`
-          export DBPASS=`echo $SECRETSTRING | jq -r '.password'`
-          export DBUSER=`echo $SECRETSTRING | jq -r '.username'`
-          echo "export DBPASS=\"$DBPASS\"" >> /home/ubuntu/.bashrc
-          echo "export DBUSER=$DBUSER" >> /home/ubuntu/.bashrc
-          echo "* db credentials initialized" >> /debug.log
-
-          # reboot
-          echo "* bootstrap complete, rebooting" >> /debug.log
-          shutdown -r now
-
 ## Create parameter groups for cluster nodes
   pgNodeParams:
     Type: AWS::RDS::DBParameterGroup
@@ -694,161 +595,24 @@ Resources:
         - Key: Name
           Value: !Sub ${gdbPrefix}-cluster-params
 
-## Create a random generated password and store it as a secret
-  secretClusterMasterUser:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Description: "Master user credentials for labstack-cluster"
-      GenerateSecretString:
-        SecretStringTemplate: '{"username": "masteruser"}'
-        GenerateStringKey: 'password'
-        PasswordLength: 10
-        ExcludeCharacters: '"@/\$`&,.<>'
-      Tags:
-        - Key: Name
-          Value: labstack-secret
-
-## Create Aurora cluster
-  dbCluster:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      Engine: aurora
-      EngineMode: global
-      EngineVersion: 5.6.10a
-      DBSubnetGroupName: !Ref dbSubnets
-      DBClusterParameterGroupName: !Ref cpgClusterParams
-      DBClusterIdentifier: !Sub ${gdbPrefix}-cluster
-      BackupRetentionPeriod: 7
-      MasterUsername: 'masteruser'
-      MasterUserPassword: !Ref dbMasterPassword
-      DatabaseName: !FindInMap [ ClusterSettings, global, dbSchema ]
-      StorageEncrypted: true
-      VpcSecurityGroupIds: [ !Ref dbSecGroupCluster ]
-      EnableCloudwatchLogsExports: [ error, slowquery ]
-      EnableIAMDatabaseAuthentication: true
-      AssociatedRoles:
-        - RoleArn: !GetAtt roleServiceIntegration.Arn
-      Tags:
-        - Key: Name
-          Value: !Sub ${gdbPrefix}-cluster
-
-## Deploy the first cluster node (always the writer)
-  dbNodeWriter:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      DBClusterIdentifier: !Ref dbCluster
-      DBInstanceIdentifier: !Sub ${gdbPrefix}-node1
-      CopyTagsToSnapshot: true
-      DBInstanceClass: !FindInMap [ RegionalSettings, !Ref "AWS::Region", nodeType ]
-      DBParameterGroupName: !Ref pgNodeParams
-      Engine: aurora
-      MonitoringInterval: 1
-      MonitoringRoleArn: !GetAtt roleEnhancedMonitoring.Arn
-      PubliclyAccessible: false
-      EnablePerformanceInsights: true
-      PerformanceInsightsRetentionPeriod: 7
-      Tags:
-        - Key: Name
-          Value: !Sub ${gdbPrefix}-node1
-
-
-## Create sysbench prep SSM document
-  ssmDocSysbenchTest:
-    Type: AWS::SSM::Document
-    Properties:
-      DocumentType: Command
-      Tags:
-        - Key: Name
-          Value: labstack-sysbench-test
-      Content:
-        schemaVersion: '2.2'
-        description: SysBench Percona TPCC-LIKE Preparation
-        parameters:
-          clusterEndpoint:
-            type: String
-            description: Aurora Cluster Endpoint
-            default: !GetAtt dbCluster.Endpoint.Address
-          dbUser:
-            type: String
-            description: DB User
-            default: !Join ['', ['{{resolve:secretsmanager:', !Ref secretClusterMasterUser, ':SecretString:username}}' ]]
-          dbPassword:
-            type: String
-            description: DB Password
-            default: !Join ['', ['{{resolve:secretsmanager:', !Ref secretClusterMasterUser, ':SecretString:password}}' ]]
-          dbSchema:
-            type: String
-            description: DB Schema
-            default: !FindInMap [ ClusterSettings, sysbench, dbSchema ]
-          dbDriver:
-            type: String
-            description: DB Driver
-            default: !FindInMap [ ClusterSettings, global, dbDriver ]
-            allowedValues: [ mysql, pgsql ]
-          runTime:
-            type: String
-            description: Test Runtime
-            default: !FindInMap [ ClusterSettings, sysbench, runTime ]
-          numThreads:
-            type: String
-            description: Threads
-            default: !FindInMap [ ClusterSettings, sysbench, numThreads ]
-          numTables:
-            type: String
-            description: Tables
-            default: !FindInMap [ ClusterSettings, sysbench, numTables ]
-          numScale:
-            type: String
-            description: Scale
-            default: !FindInMap [ ClusterSettings, sysbench, numWarehouses ]
-        mainSteps:
-        - action: aws:runShellScript
-          name: SysBenchTpccPrepare
-          inputs:
-            runCommand:
-            - 'echo "DROP SCHEMA IF EXISTS {{ dbSchema }}; CREATE SCHEMA {{ dbSchema }};" | mysql -h{{ clusterEndpoint }} -u{{ dbUser }} -p"{{ dbPassword }}" && cd /home/ubuntu/sysbench-tpcc && ./tpcc.lua --mysql-host={{ clusterEndpoint }} --mysql-user={{ dbUser }} --mysql-password="{{ dbPassword }}" --mysql-db={{ dbSchema }} --threads={{ numThreads }} --tables={{ numTables }} --scale={{ numScale }} --time={{ runTime }} --db-driver={{ dbDriver }} prepare'
-        - action: aws:runShellScript
-          name: SysBenchTpccRun
-          inputs:
-            runCommand:
-            - 'cd /home/ubuntu/sysbench-tpcc && ./tpcc.lua --mysql-host={{ clusterEndpoint }} --mysql-user={{ dbUser }} --mysql-password="{{ dbPassword }}" --mysql-db={{ dbSchema }} --threads={{ numThreads }} --tables={{ numTables }} --scale={{ numScale }} --time={{ runTime }} --db-driver={{ dbDriver }} run'
-
-
 ## Outputs
 Outputs:
   vpcId:
-    Description: Region1 Aurora Lab VPC
+    Description: Region2 Aurora Lab VPC
     Value: !Ref vpc
-  bastionInstanceID:
-    Description: Region1 Bastion Instance ID
-    Value: !Ref bastionHost
   supersetInstanceID:
-    Description: Region1 Apache Superset Instance ID
-    Value: !Ref supersetHost
-  bastionPublicDNSName:
-    Description: Region1 Bastion Public DNS Name
-    Value: !GetAtt bastionHost.PublicDnsName
+    Description: Region2 Apache Superset Instance ID
+    Value: !Ref supersetHost 
   supersetPublicDNSName:
     Description: Region1 Apache Superset Public DNS Name
+    Value: !GetAtt supersetHost.PublicDnsName    
+  supersetPublicDNSName:
+    Description: Region2 Apache Superset Public DNS Name
     Value: !GetAtt supersetHost.PublicDnsName
-  clusterName:
-    Description: Region1 Aurora Regional Cluster Name
-    Value: !Ref dbCluster
-  clusterEndpoint:
-    Description: Region1 Aurora Regional Cluster Writer Endpoint
-    Value: !GetAtt dbCluster.Endpoint.Address
-  clusterMasterPassword:
-    Description: Aurora Master Password
-    Value: !Ref dbMasterPassword
-  loadTestRunDoc:
-    Description: Region1 Load Test Execution Command Document
-    Value: !Ref ssmDocSysbenchTest
   dbSubnetGroup:
-    Description: Region1 Database Subnet Group
+    Description: Region2 Database Subnet Group
     Value: !Ref dbSubnets
   dbSecurityGroup:
-    Description: Region1 Database Security Group
+    Description: Region2 Database Security Group
     Value: !Ref dbSecGroupCluster
-  secretArn:
-    Description: Region1 Database Credentials Secret ARN
-    Value: !Ref secretClusterMasterUser
+

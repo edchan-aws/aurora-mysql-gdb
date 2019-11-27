@@ -21,40 +21,59 @@ An **Amazon Aurora Replica** supports only read operations, connects to the same
 
 #
 
+### Global Database - Add Region
+
 >  **`Region 1 (Primary)`** 
 
-1. In the AWS Management Console, ensure that you are working within your assigned primary region. Use the Service menu and click on **RDS** or simply type **RDS** into the search bar. This will bring up the Amazon RDS console.
+1. In the AWS Management Console, ensure that you are working within your assigned primary region. Using the Service menu, click on or type to search for **RDS**. This will bring up the Amazon RDS console.
 
-1. Within the RDS console, select **Databases** on the left menu. This will bring you to the list of Databases already deployed. You should see **!gdbRegion1Cluster**  and **!gdbRegion1Instance** . 
+1. Within the RDS console, select **Databases** on the left menu. This will bring you to the list of Databases already deployed. You should see **gdb1-cluster** and **gdb1-node1**. 
 
-   * Note: As Aurora now supports Global Database, this main RDS Databases view will show you all Aurora Database clusters regardless of your selected region, along with RDS DB instances that are local to the selected region.
+1. Select **gdb1-cluster**. Click on the **Actions** menu, and select **Add Region**.
 
-1. Select **!gdbRegion1Cluster**. Click on the **Actions** menu, and select **Create global database**.
+    ![GDB Add Region](gdb-add-region1.png)
 
-1. You are now creating a Global Database from your primary region's Aurora DB cluster.
+1. You are now creating an Aurora Global Database, adding a new region DB cluster to be replicated from your primary region's Aurora DB cluster.
 
    1. Under **Global database identifier**. We will name our Global database as ``reinvent-dat348-gdb``
 
    1. For **Secondary Region**, use the drop down list and select your assigned secondary region **`Region 2 (Secondary)`**. This can take a few seconds to load.
 
    1. Next, we have **DB Instance Class**. Aurora allows replicas and Global Database instances to be of different instance class and size. We will leave this as the default ``db.r5.large``.
+     ![GDB Settings 1](gdb-settings1.png)
 
-   1. For **Multi-AZ deployment**, we will leave this as the default value ``Don't create an Aurora Replica``. For production, you can scale your read traffic to multiple reader nodes for even higher availability.
+   1. For **Multi-AZ deployment**, we will leave this as the default value ``Don't create an Aurora Replica``. For production, it is highly recommended to scale your read traffic to multiple reader nodes for even higher availability.
 
-   1. For **Virtual Private Cloud**, we will click on the drop down list, and select ``!region2vpc``.
+   1. For **Virtual Private Cloud**, we will click on the drop down list, and select ``gdb2-vpc``. This is the dedicated VPC we created from CloudFormation for the secondary region.
 
    1. Expand on **Additional connectivity configuration** for more options.
 
-   1. Under **Existing VPC security groups**, we will click on the drop down list, <span style="color:red;">deselect</span> ``default`` and <span style="color:green;">select</span> ``!region2vpcDBsg``.
+   1. Under **Existing VPC security groups**, we will click on the drop down list, <span style="color:red;">deselect</span> ``default`` and <span style="color:green;">select</span> ``gdb2-mysql-internal``. Attaching this security group allows our applications in the secondary region to reach the Aurora secondary DB Cluster.
+     ![GDB Settings 2](gdb-settings2.png)
 
    1. Leave the other default options, scroll down to bottom of the page and expand on **Additional configuration**.
 
-   1. For **DB instance identifier**, we will name the Aurora DB instance for the secondary region. Let's name this ``!gdbRegion2Instance``
+   1. For **DB instance identifier**, we will name the Aurora DB instance for the secondary region. Let's name this ``gdb2-node1``
 
-   1. Similarly, under **DB cluster identifier**, we will name the Aurora DB cluster for the secondary region. Let's name this ``!gdbRegion2Cluster``
+   1. Similarly, under **DB cluster identifier**, we will name the Aurora DB cluster for the secondary region. Let's name this ``gdb2-cluster``
+     ![GDB Settings 3](gdb-settings3.png)
 
-   1. Finally, under **Log exports**, we will turn on log exports for all log types to centralize and gather them into Amazon CloudWatch.
+   1. Near the bottom, under **Monitoring**, Enable Enhanced Monitoring. We will vend metrics down to ``1-second`` **Granularity**. Click on the drop-down menu and change **Monitoring Role** to the IAM role you have under ``gdb2-monitor-<xx-region-x>`` name.
+   
+   1. For **Log exports**, we will enable and publish all log types to centralize and gather them into Amazon CloudWatch Logs.
+     ![GDB Settings 4](gdb-settings4.png)
 
-   1. <span style="color:red;">**Please validate all your settings**</span>, anything that's not explicitly called out in the instructions here can be left on the default values. Remember, some database settings and configurations are immutable after creation. Let's confirm carefully that we have everything in order before pressing the **Create global database** button.
+   1. <span style="color:red;">**Please validate all your settings**</span>, anything that's not explicitly called out in the instructions here can be left on the default values. Remember, some database settings and configurations are immutable after creation. Let's confirm carefully that we have everything in order before pressing the **Add Region** button.
 
-1. You will then be returned to the main RDS console and see that the Aurora DB Cluster and DB Instance in your secondary region is being provisioned. This will take about 15 minutes. You can move on to the next step while this is being created.
+1. You will then be returned to the main RDS console and see that the Aurora DB Cluster and DB Instance in your secondary region is being provisioned. This will take about 15 minutes and the Secondary DB cluster and new DB instance reader will report as *Available*. You can move on to the next step while this is still being created.
+  ![GDB Settings 5](gdb-settings5.png)
+
+#
+
+### Checkpoint
+
+At this point, you have created the Global Database, expanded the Aurora DB cluster from your primary region to replicate data over to the secondary region.
+
+![Global Database Creation Architecture Diagram](gdb-arch.png)
+
+Proceed to the next step to [Connect Applications](../biapp/index.md).
