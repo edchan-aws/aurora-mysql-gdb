@@ -23,7 +23,6 @@ Combined with an application layer that is deployed cross-region (via immutable 
 1. Copy and paste the following SQL query and click on **Run Query**
 
     ```
-    USE mylab;
     DROP TABLE IF EXISTS mylab.failovertest1;
 
     CREATE TABLE mylab.failovertest1 (
@@ -100,7 +99,6 @@ As we are simulating a prolonged regional infrastructure or service level failur
 1. Copy and paste the following SQL query and click on **Run Query**
 
     ```
-    USE mylab;
     SELECT * FROM mylab.failovertest1;
     ```
 
